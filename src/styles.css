@@ -1,0 +1,22 @@
+:root {
+    --primary-blue: #007BFF;
+    --primary-orange: #FF6B35;
+    --primary-white: #FFFFFF;
+    --accent-green: #28A745;
+    --accent-grey: #6C757D;
+    --background-light: #FFFFFF;
+    --background-dark: #121212;
+    --text-light: #000000;
+    --text-dark: #FFFFFF;
+}
+
+body {
+    background-color: var(--background-light);
+    color: var(--text-light);
+    transition: background-color 0.3s, color 0.3s;
+}
+
+body.dark-mode {
+    background-color: var(--background-dark);
+    color: var(--text-dark);
+}
