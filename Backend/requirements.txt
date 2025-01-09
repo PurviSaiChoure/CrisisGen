@@ -1,8 +1,10 @@
 phidata
 python-dotenv
-yfinance
 packaging
 duckduckgo-search
 fastapi
 uvicorn
 groq
+newspaper4k
+lxml_html_clean
+duckdb
