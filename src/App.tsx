@@ -19,7 +19,7 @@ function App() {
   
   return (
     <Router>
-      <div className={`min-h-screen ${isDark ? 'dark-mode' : 'light-mode'}`}>
+      <div className={isDark ? 'dark-mode' : 'light-mode'}>
         <ThemeToggle />
         <Navbar />
         <Routes>

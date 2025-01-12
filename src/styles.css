@@ -1,22 +1,80 @@
 :root {
-    --primary-blue: #007BFF;
-    --primary-orange: #FF6B35;
-    --primary-white: #FFFFFF;
-    --accent-green: #28A745;
-    --accent-grey: #6C757D;
-    --background-light: #FFFFFF;
-    --background-dark: #121212;
-    --text-light: #000000;
-    --text-dark: #FFFFFF;
+  /* Dark theme */
+  --dark-bg: #121212;
+  --dark-gradient: linear-gradient(to bottom, #111827, #1f2937);
+  --dark-text: #FFFFFF;
+  --dark-text-secondary: #94a3b8;
+  --dark-card: rgba(255, 255, 255, 0.05);
+  --dark-border: rgba(255, 255, 255, 0.1);
+
+  /* Light theme */
+  --light-bg: #FFFFFF;
+  --light-gradient: linear-gradient(to bottom, #f8fafc, #e2e8f0);
+  --light-text: #1e293b;
+  --light-text-secondary: #475569;
+  --light-card: rgba(0, 0, 0, 0.05);
+  --light-border: rgba(0, 0, 0, 0.1);
+
+  /* Brand colors */
+  --primary: #007BFF;
+  --primary-dark: #0056b3;
+  --secondary: #FF6B35;
+  --success: #28A745;
+  --neutral: #6C757D;
 }
 
-body {
-    background-color: var(--background-light);
-    color: var(--text-light);
-    transition: background-color 0.3s, color 0.3s;
+/* Dark mode styles */
+.dark-mode {
+  background: var(--dark-gradient);
+  color: var(--dark-text);
 }
 
-body.dark-mode {
-    background-color: var(--background-dark);
-    color: var(--text-dark);
+.dark-mode .bg-black\/30,
+.dark-mode .bg-black\/40,
+.dark-mode .bg-white\/5,
+.dark-mode .bg-white\/10 {
+  background: var(--dark-card);
+}
+
+.dark-mode .border-white\/10,
+.dark-mode .border-white\/20 {
+  border-color: var(--dark-border);
+}
+
+.dark-mode .text-neutral-light {
+  color: var(--dark-text-secondary);
+}
+
+/* Light mode styles */
+.light-mode {
+  background: var(--light-gradient);
+  color: var(--light-text);
+}
+
+.light-mode .bg-black\/30,
+.light-mode .bg-black\/40,
+.light-mode .bg-white\/5,
+.light-mode .bg-white\/10 {
+  background: var(--light-card);
+}
+
+.light-mode .border-white\/10,
+.light-mode .border-white\/20 {
+  border-color: var(--light-border);
+}
+
+.light-mode .text-neutral-light {
+  color: var(--light-text-secondary);
+}
+
+/* Transitions */
+body,
+.bg-black\/30,
+.bg-black\/40,
+.bg-white\/5,
+.bg-white\/10,
+.border-white\/10,
+.border-white\/20,
+.text-neutral-light {
+  transition: all 0.3s ease-in-out;
 }

@@ -11,7 +11,7 @@
   }
   
   body {
-    @apply bg-emerald-950 text-gray-100;
+    @apply min-h-screen;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -21,23 +21,25 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-blue-600 hover:bg-blue-700 hover:scale-[1.02] text-white px-6 py-2 rounded-lg font-semibold transition-all duration-200 transform;
+    @apply bg-primary hover:bg-primary-dark hover:scale-[1.02] text-white px-6 py-2 rounded-lg font-semibold transition-all duration-200 transform;
   }
   
   .btn-warning {
-    @apply bg-orange-600 hover:bg-orange-700 hover:scale-[1.02] text-white px-6 py-2 rounded-lg font-semibold transition-all duration-200 transform;
+    @apply bg-secondary hover:bg-secondary-dark hover:scale-[1.02] text-white px-6 py-2 rounded-lg font-semibold transition-all duration-200 transform;
   }
 
   .btn-success {
-    @apply bg-green-600 hover:bg-green-700 hover:scale-[1.02] text-white px-6 py-2 rounded-lg font-semibold transition-all duration-200 transform;
+    @apply bg-success hover:bg-success-dark hover:scale-[1.02] text-white px-6 py-2 rounded-lg font-semibold transition-all duration-200 transform;
   }
   
   .input-field {
-    @apply bg-black/30 border border-emerald-900/50 rounded-lg px-4 py-2 text-gray-100 focus:outline-none focus:border-blue-500/50 transition-colors duration-200;
+    @apply bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-gray-100 
+    focus:outline-none focus:border-primary focus:border-opacity-50 transition-colors duration-200;
   }
 
   .card {
-    @apply bg-black/40 backdrop-blur-sm border border-white/10 rounded-xl p-6 transition-all duration-300 hover:border-white/20;
+    @apply bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 
+    transition-all duration-300 hover:border-white/20;
   }
 
   .glassmorphism {

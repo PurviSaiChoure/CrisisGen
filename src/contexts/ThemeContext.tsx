@@ -8,18 +8,22 @@ type ThemeContextType = {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
-  const [isDark, setIsDark] = useState(true);
+  const [isDark, setIsDark] = useState(() => {
+    const savedTheme = localStorage.getItem('theme');
+    return savedTheme ? savedTheme === 'dark' : true;
+  });
 
   useEffect(() => {
-    // Apply initial theme
-    document.documentElement.classList.toggle('light-mode', !isDark);
-    document.documentElement.classList.toggle('dark-mode', isDark);
-  }, []);
+    // Remove both classes first to avoid conflicts
+    document.documentElement.classList.remove('light-mode', 'dark-mode');
+    // Add the appropriate class
+    document.documentElement.classList.add(isDark ? 'dark-mode' : 'light-mode');
+    // Save to localStorage
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  }, [isDark]);
 
   const toggleTheme = () => {
-    setIsDark(!isDark);
-    document.documentElement.classList.toggle('light-mode');
-    document.documentElement.classList.toggle('dark-mode');
+    setIsDark(prev => !prev);
   };
 
   return (
