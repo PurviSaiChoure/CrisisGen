@@ -12,11 +12,14 @@ import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import './styles.css'; // Import the CSS file
 import { ThemeToggle } from './components/ThemeToggle';
+import { useTheme } from './contexts/ThemeContext';
 
 function App() {
+  const { isDark } = useTheme();
+  
   return (
     <Router>
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800">
+      <div className={`min-h-screen ${isDark ? 'dark-mode' : 'light-mode'}`}>
         <ThemeToggle />
         <Navbar />
         <Routes>

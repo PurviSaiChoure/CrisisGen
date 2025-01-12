@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 type ThemeContextType = {
   isDark: boolean;
@@ -10,9 +10,16 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [isDark, setIsDark] = useState(true);
 
+  useEffect(() => {
+    // Apply initial theme
+    document.documentElement.classList.toggle('light-mode', !isDark);
+    document.documentElement.classList.toggle('dark-mode', isDark);
+  }, []);
+
   const toggleTheme = () => {
     setIsDark(!isDark);
-    // Add logic to switch theme classes on body/html
+    document.documentElement.classList.toggle('light-mode');
+    document.documentElement.classList.toggle('dark-mode');
   };
 
   return (
