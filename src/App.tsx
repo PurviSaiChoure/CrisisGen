@@ -11,22 +11,14 @@ import { Summary } from './pages/Summary';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import './styles.css'; // Import the CSS file
+import { ThemeToggle } from './components/ThemeToggle';
 
 function App() {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
-    document.body.classList.toggle('dark-mode', !isDarkMode);
-  };
-
   return (
     <Router>
-      <div className="min-h-screen bg-emerald-950 text-gray-100">
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800">
+        <ThemeToggle />
         <Navbar />
-        <button onClick={toggleTheme} className="theme-toggle">
-          Toggle {isDarkMode ? 'Light' : 'Dark'} Mode
-        </button>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/dashboard" element={<Dashboard />} />
