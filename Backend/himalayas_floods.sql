@@ -1,0 +1,1 @@
+SELECT * FROM himalayas_floods WHERE location = 'Himalayas';

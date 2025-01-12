@@ -8,3 +8,5 @@ groq
 newspaper4k
 lxml_html_clean
 duckdb
+flask
+flask-cors
