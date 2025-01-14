@@ -7,266 +7,232 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import sys
 from io import StringIO
-import time
+import logging
 import re
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
 
-# Create a unified disaster response agent
-disaster_response_agent = Agent(
-    name="Disaster Response Agent",
-    role="Analyze and report on disaster situations",
-    model=Groq(id="mixtral-8x7b-32768"),
-    tools=[DuckDuckGo(), Newspaper4k()],
-    description=(
-        "You are an Emergency Management Specialist and Disaster Response Expert. "
-        "Your role is to provide comprehensive analysis of disaster situations, "
-        "including current status, impacts, and recommendations."
-    ),
-    instructions=[
-        "Search for and analyze current disaster information",
-        "Use reliable sources and provide factual summaries",
-        "Structure responses clearly with specific sections",
-        "Include actionable recommendations for different stakeholders",
-        "Focus on verified information and practical insights"
-    ],
-    show_tool_calls=False,
-    markdown=True
-)
-
 app = Flask(__name__)
 CORS(app)
 
-@app.route('/', methods=['GET'])
-def home():
-    return jsonify({
-        'status': 'success',
-        'message': 'Disaster Response API is running'
-    })
+def clean_response(text):
+    """Clean and format the response text"""
+    try:
+        # Remove RunResponse metadata
+        text = re.sub(r"content='(.*?)'.*$", r'\1', text, flags=re.DOTALL)
+        text = re.sub(r'content=.*?Running:', '', text, flags=re.DOTALL)
+        
+        # Remove system messages and instructions
+        text = re.sub(r'Message\(role=.*?\)', '', text, flags=re.DOTALL)
+        text = re.sub(r'Instructions:.*?\\n', '', text, flags=re.DOTALL)
+        
+        # Clean up newlines and markdown
+        text = text.replace('\\n', '\n')  # Convert literal \n to actual newlines
+        text = re.sub(r'\n{3,}', '\n\n', text)  # Remove excessive newlines
+        
+        # Fix markdown headers
+        text = re.sub(r'#\s*([^#\n]+?)(?=\n|$)', r'# \1', text)  # Fix main headers
+        text = re.sub(r'#{2}\s*([^#\n]+?)(?=\n|$)', r'## \1', text)  # Fix subheaders
+        
+        # Remove any remaining metadata or system text
+        text = re.sub(r'RunResponse.*?\\n', '', text)
+        text = re.sub(r'content_type=.*?(?=\n|$)', '', text)
+        text = re.sub(r'event=.*?(?=\n|$)', '', text)
+        text = re.sub(r'messages=.*?(?=\n|$)', '', text)
+        
+        # Clean up any remaining special characters
+        text = re.sub(r'\\+["\']', '', text)  # Remove escaped quotes
+        text = re.sub(r'\s+', ' ', text)  # Normalize whitespace
+        
+        # Ensure proper section spacing
+        sections = text.split('#')
+        cleaned_sections = []
+        for section in sections:
+            if section.strip():
+                # Properly format section headers and content
+                section = section.strip()
+                if not section.startswith(' '):
+                    section = ' ' + section
+                cleaned_sections.append(section)
+        
+        text = '#'.join(cleaned_sections)
+        
+        # Final cleanup
+        text = text.strip()
+        text = re.sub(r'\n\s*\n\s*\n', '\n\n', text)  # Remove triple newlines
+        
+        return text
+        
+    except Exception as e:
+        logger.error(f"Error cleaning response: {str(e)}")
+        # Return original text if cleaning fails
+        return text
+
+# Web Search Agent for real-time updates
+web_search_agent = Agent(
+    name="Web Search Agent",
+    role="Search the web for disaster-related news and information",
+    model=Groq(id="llama-3.1-8b-instant"),
+    tools=[DuckDuckGo()],
+    instructions=[
+        "Search for latest news and updates about the specified disaster",
+        "Focus on verified sources and official reports",
+        "Collect information about current status and immediate impacts",
+        "Return information in a clear, narrative format",
+    ],
+    show_tool_calls=True,
+    verbose=True,
+)
+
+# Research Agent for disaster response information
+research_agent = Agent(
+    name="Research Agent",
+    role="Gather in-depth disaster response research",
+    model=Groq(id="llama-3.1-8b-instant"),
+    tools=[DuckDuckGo(), Newspaper4k()],
+    description="Expert in Emergency Management and Humanitarian Crisis Research",
+    instructions=[
+        "Research and analyze disaster response strategies",
+        "Focus on relief efforts and recovery plans",
+        "Gather information about environmental impacts",
+        "Identify recommendations for different stakeholders",
+        "Present information in a clear, narrative format without raw data",
+    ],
+    show_tool_calls=True,
+    verbose=True,
+)
+
+# Synthesis Agent for combining and structuring information
+synthesis_agent = Agent(
+    name="Synthesis Agent",
+    role="Synthesize and structure disaster information",
+    model=Groq(id="llama-3.1-8b-instant"),
+    instructions=[
+        "Combine and structure information into a clean markdown report",
+        "Format the report exactly as follows:",
+        "",
+        "# Current Situation",
+        "<situation content>",
+        "",
+        "# Affected Areas",
+        "<areas content>",
+        "",
+        "# Environmental Impacts",
+        "<impacts content>",
+        "",
+        "# Ongoing Relief Efforts",
+        "<efforts content>",
+        "",
+        "# Recommendations",
+        "",
+        "## For Government Agencies",
+        "<government recommendations>",
+        "",
+        "## For NGOs",
+        "<ngo recommendations>",
+        "",
+        "## For Individual Citizens",
+        "<citizen recommendations>"
+    ],
+    show_tool_calls=False,
+    verbose=True,
+    markdown=True,
+)
+
+def format_query(filters):
+    """Format the search query based on filters"""
+    timeframe_map = {
+        "24h": "24 hours",
+        "7d": "7 days",
+        "30d": "30 days"
+    }
+    
+    location_part = f"in {filters['location']}" if filters.get('location') else "globally"
+    time_part = f"during the last {timeframe_map.get(filters.get('timeframe', ''))}" if filters.get('timeframe') else ""
+    
+    return {
+        'search_query': (
+            f"Latest updates on {filters['disasterType']} {location_part} {time_part}. "
+            "Provide information in a clear narrative format without raw data."
+        ),
+        'research_query': (
+            f"Analysis of {filters['disasterType']} impacts and response efforts {location_part} {time_part}. "
+            "Present findings in a narrative format without raw data or URLs."
+        ),
+        'synthesis_query': (
+            f"Create a comprehensive report on the {filters['disasterType']} situation {location_part} {time_part}. "
+            "Format as a clean markdown document with proper sections."
+        )
+    }
 
 @app.route('/generate-summary', methods=['POST'])
 def generate_summary():
     try:
-        if not request.is_json:
-            return jsonify({
-                'status': 'error',
-                'error': 'Request must be JSON'
-            }), 400
-
         filters = request.json
         
         if 'disasterType' not in filters:
             return jsonify({
                 'status': 'error',
-                'error': 'disasterType is required'
+                'error': 'Disaster type is required'
             }), 400
-        
-        # Updated prompt with more specific instructions
-        prompt = f"""
-As a Disaster Response Expert, provide a detailed analysis of the current {filters['disasterType']} situation
-{f'in {filters["location"]}' if filters.get('location') else ''}
-{f'during {filters.get("timeframe")}' if filters.get('timeframe') else ''}.
 
-Use the following structure and provide SPECIFIC, DETAILED information for each section:
-
-# Current Situation
-Provide a comprehensive overview of the current state, including scale, intensity, and immediate threats.
-
-# Affected Areas
-List specific regions, neighborhoods, and communities impacted, with details about the extent of damage.
-
-# Environmental Impacts
-Detail specific environmental consequences, including air quality, wildlife impact, and ecosystem damage.
-
-# Ongoing Relief Efforts
-Describe specific organizations involved, current response activities, and resources being deployed.
-
-# Recommendations
-
-## For Government Agencies
-Provide specific, actionable steps that government agencies should take immediately.
-
-## For NGOs
-List concrete actions and initiatives that NGOs can implement to support relief efforts.
-
-## For Individual Citizens
-Outline practical steps that residents can take to stay safe and support recovery efforts.
-
-Use current data and reliable sources. Provide specific details rather than general statements.
-"""
-
-        print(f"Processing query with prompt: {prompt}")
-
-        output = StringIO()
-        sys.stdout = output
+        logger.info(f"Generating summary for filters: {filters}")
+        queries = format_query(filters)
 
         try:
-            max_retries = 3
-            retry_count = 0
-            
-            while retry_count < max_retries:
-                try:
-                    disaster_response_agent.print_response(prompt, stream=False)
-                    break
-                except Exception as e:
-                    if 'rate_limit_exceeded' in str(e):
-                        retry_count += 1
-                        if retry_count < max_retries:
-                            print(f"Rate limit hit, retrying in 5 seconds... (Attempt {retry_count}/{max_retries})")
-                            time.sleep(5)
-                            continue
-                    raise e
+            # Step 1: Gather current information
+            logger.info("Gathering current information...")
+            current_info = web_search_agent.run(queries['search_query'])
 
-            sys.stdout = sys.__stdout__
-            response = output.getvalue()
+            # Step 2: Research response and impacts
+            logger.info("Researching response and impacts...")
+            research_info = research_agent.run(queries['research_query'])
 
-            if not response:
-                raise ValueError("No response generated")
-
-            # Clean up the response
-            ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-            cleaned_response = ansi_escape.sub('', response)
-
-            # Remove box drawing characters and formatting
-            box_chars = re.compile(r'[┃┏┓┗┛━]')
-            cleaned_response = box_chars.sub('', cleaned_response)
-
-            # Find the actual content (everything after the second occurrence of "Current Situation")
-            parts = cleaned_response.split("Current Situation")
-            if len(parts) > 2:
-                cleaned_response = "# Current Situation" + parts[2]  # Take the content after the second occurrence
-
-            # Remove any lines containing template instructions or metadata
-            cleaned_response = '\n'.join(
-                line for line in cleaned_response.splitlines()
-                if line.strip() and not any(x in line.lower() for x in [
-                    'message', 'response', 'tool_call',
-                    'provide', 'list specific', 'detail specific',
-                    'describe specific', 'outline practical',
-                    'use current data', 'provide specific details'
-                ])
+            # Step 3: Synthesize information
+            logger.info("Synthesizing information...")
+            synthesis_prompt = (
+                f"Based on these inputs:\n\n"
+                f"CURRENT INFORMATION:\n{current_info}\n\n"
+                f"RESEARCH INFORMATION:\n{research_info}\n\n"
+                f"Create a comprehensive report following the specified structure. "
+                f"Ensure proper markdown formatting and remove any raw data or metadata."
             )
+            final_report = synthesis_agent.run(synthesis_prompt)
 
-            # Ensure proper section formatting
-            sections = []
-            current_section = []
-            current_title = None
+            if not final_report:
+                raise ValueError("No response generated from synthesis agent")
 
-            for line in cleaned_response.splitlines():
-                line = line.strip()
-                if line:
-                    if line.startswith('#'):
-                        if current_section:
-                            content = '\n'.join(current_section)
-                            if current_title and content:
-                                sections.append(f"{current_title}\n{content}")
-                        current_title = line
-                        current_section = []
-                    else:
-                        current_section.append(line)
-
-            if current_section and current_title:
-                content = '\n'.join(current_section)
-                sections.append(f"{current_title}\n{content}")
-
-            cleaned_response = '\n\n'.join(sections)
+            # Clean and format the final report
+            cleaned_report = clean_response(str(final_report))
             
-            print("Cleaned response:", cleaned_response)  # Debug log
-
-            # Parse the sections into a structured format
-            parsed_summary = {
-                'currentSituation': '',
-                'affectedAreas': '',
-                'environmentalImpacts': '',
-                'reliefEfforts': '',
-                'recommendations': {
-                    'government': '',
-                    'ngos': '',
-                    'citizens': ''
-                }
-            }
-
-            current_section = None
-            for line in cleaned_response.splitlines():
-                line = line.strip()
-                if line.startswith('# '):
-                    section_title = line[2:].lower()
-                    if 'current situation' in section_title:
-                        current_section = 'currentSituation'
-                    elif 'affected areas' in section_title:
-                        current_section = 'affectedAreas'
-                    elif 'environmental impacts' in section_title:
-                        current_section = 'environmentalImpacts'
-                    elif 'ongoing relief efforts' in section_title:
-                        current_section = 'reliefEfforts'
-                    elif 'recommendations' in section_title:
-                        current_section = 'recommendations'
-                elif line.startswith('## For Government'):
-                    current_section = 'government'
-                elif line.startswith('## For NGOs'):
-                    current_section = 'ngos'
-                elif line.startswith('## For Individual'):
-                    current_section = 'citizens'
-                elif line and current_section:
-                    if current_section in parsed_summary:
-                        parsed_summary[current_section] += line + '\n'
-                    elif current_section in ['government', 'ngos', 'citizens']:
-                        parsed_summary['recommendations'][current_section] += line + '\n'
-
-            # Clean up the parsed sections
-            for key in parsed_summary:
-                if isinstance(parsed_summary[key], str):
-                    parsed_summary[key] = parsed_summary[key].strip()
-                elif isinstance(parsed_summary[key], dict):
-                    for subkey in parsed_summary[key]:
-                        parsed_summary[key][subkey] = parsed_summary[key][subkey].strip()
-
+            logger.info("Successfully generated summary")
+            
             return jsonify({
                 'status': 'success',
-                'summary': parsed_summary,
-                'filters': filters
+                'summary': cleaned_report
             })
 
         except Exception as agent_error:
-            sys.stdout = sys.__stdout__
-            print(f"Agent error: {str(agent_error)}")
-            
-            if 'rate_limit_exceeded' in str(agent_error):
-                return jsonify({
-                    'status': 'error',
-                    'error': 'Service is temporarily busy. Please try again in a few minutes.'
-                }), 429
-            
+            logger.error(f"Agent error: {str(agent_error)}")
             return jsonify({
                 'status': 'error',
-                'error': f"Failed to generate summary: {str(agent_error)}"
+                'error': "Unable to generate summary. Please try again later."
             }), 500
 
     except Exception as e:
-        sys.stdout = sys.__stdout__
-        print(f"Server error: {str(e)}")
+        logger.error(f"Server error: {str(e)}")
         return jsonify({
             'status': 'error',
-            'error': f"Server error: {str(e)}"
+            'error': "An unexpected error occurred. Please try again later."
         }), 500
 
-@app.errorhandler(404)
-def not_found(e):
-    return jsonify({
-        'status': 'error',
-        'error': 'Resource not found'
-    }), 404
-
-@app.errorhandler(500)
-def server_error(e):
-    return jsonify({
-        'status': 'error',
-        'error': 'Internal server error'
-    }), 500
-
 if __name__ == '__main__':
-    print("Starting Flask server...")
-    print("API will be available at http://localhost:5000")
-    print("Disaster Response Agent initialized and ready")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    logger.info("Starting Flask server...")
+    logger.info("API will be available at http://localhost:5000")
+    logger.info("Multi-agent Disaster Response System initialized and ready")
+    app.run(debug=True, port=5000)

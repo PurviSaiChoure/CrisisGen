@@ -12,7 +12,7 @@ load_dotenv()
 web_search_agent = Agent(
     name="Web Search Agent",
     role="Search the web for disaster-related news and information",
-    model=Groq(id="llama-3.3-70b-versatile"),
+    model=Groq(id="mixtral-8x7b-32768"),
     tool=[DuckDuckGo()],
     instructions=["Always include sources", "Prioritize emergency and relief efforts"],
     show_tool_calls=True,
@@ -23,7 +23,7 @@ web_search_agent = Agent(
 research_agent = Agent(
     name="Research Agent",
     role="Gather in-depth disaster response research",
-    model=Groq(id="llama-3.3-70b-versatile"),
+    model=Groq(id="mixtral-8x7b-32768"),
     tool=[DuckDuckGo(), Newspaper4k()],  # Can crawl emergency response data from relevant sources
     description = "You are a Emergency Management Specialist and a senior Humanitarian Crisis Researcher writing an article on disasters taking place.",
     instructions=["For a given topic, search for the top 5 links.",
@@ -46,7 +46,7 @@ research_agent = Agent(
 )'''
 
 data_analyst = DuckDbAgent(
-    model=Groq(id="llama-3.3-70b-versatile"),
+    model=Groq(id="mixtral-8x7b-32768"),
     semantic_model=json.dumps(
         {
             "tables": [
@@ -69,7 +69,7 @@ data_analyst = DuckDbAgent(
 # Combining agents for multi-agent disaster response system
 multi_ai_agent = Agent(
     team=[web_search_agent, research_agent, data_analyst],
-    model=Groq(id="llama-3.3-70b-versatile"),
+    model=Groq(id="mixtral-8x7b-32768"),
     instructions=["Provide real-time disaster updates, predictions, and response strategies", 
                   "Use structured output and always include sources",
                   "Generate a structured report including key trends, insights, and actionable recommendations.",

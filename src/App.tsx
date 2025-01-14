@@ -13,6 +13,7 @@ import { Footer } from './components/Footer';
 import './styles.css'; // Import the CSS file
 import { ThemeToggle } from './components/ThemeToggle';
 import { useTheme } from './contexts/ThemeContext';
+import { GenerateSummary } from './pages/GenerateSummary';
 
 function App() {
   const { isDark } = useTheme();
@@ -31,6 +32,7 @@ function App() {
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/summary" element={<Summary />} />
+          <Route path="/generate-summary" element={<GenerateSummary />} />
         </Routes>
         <Footer />
       </div>
