@@ -5,8 +5,6 @@ from phi.tools.newspaper4k import Newspaper4k
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import sys
-from io import StringIO
 import logging
 import re
 
@@ -22,56 +20,111 @@ CORS(app)
 
 def clean_response(text):
     """Clean and format the response text"""
-    try:
-        # Remove RunResponse metadata
-        text = re.sub(r"content='(.*?)'.*$", r'\1', text, flags=re.DOTALL)
-        text = re.sub(r'content=.*?Running:', '', text, flags=re.DOTALL)
-        
-        # Remove system messages and instructions
-        text = re.sub(r'Message\(role=.*?\)', '', text, flags=re.DOTALL)
-        text = re.sub(r'Instructions:.*?\\n', '', text, flags=re.DOTALL)
-        
-        # Clean up newlines and markdown
-        text = text.replace('\\n', '\n')  # Convert literal \n to actual newlines
-        text = re.sub(r'\n{3,}', '\n\n', text)  # Remove excessive newlines
-        
-        # Fix markdown headers
-        text = re.sub(r'#\s*([^#\n]+?)(?=\n|$)', r'# \1', text)  # Fix main headers
-        text = re.sub(r'#{2}\s*([^#\n]+?)(?=\n|$)', r'## \1', text)  # Fix subheaders
-        
-        # Remove any remaining metadata or system text
-        text = re.sub(r'RunResponse.*?\\n', '', text)
-        text = re.sub(r'content_type=.*?(?=\n|$)', '', text)
-        text = re.sub(r'event=.*?(?=\n|$)', '', text)
-        text = re.sub(r'messages=.*?(?=\n|$)', '', text)
-        
-        # Clean up any remaining special characters
-        text = re.sub(r'\\+["\']', '', text)  # Remove escaped quotes
-        text = re.sub(r'\s+', ' ', text)  # Normalize whitespace
-        
-        # Ensure proper section spacing
-        sections = text.split('#')
-        cleaned_sections = []
-        for section in sections:
-            if section.strip():
-                # Properly format section headers and content
-                section = section.strip()
-                if not section.startswith(' '):
-                    section = ' ' + section
-                cleaned_sections.append(section)
-        
-        text = '#'.join(cleaned_sections)
-        
-        # Final cleanup
-        text = text.strip()
-        text = re.sub(r'\n\s*\n\s*\n', '\n\n', text)  # Remove triple newlines
-        
-        return text
-        
-    except Exception as e:
-        logger.error(f"Error cleaning response: {str(e)}")
-        # Return original text if cleaning fails
-        return text
+    # Remove content tags and metadata
+    text = re.sub(r'\*\*content=[\'"]\*\*', '', text)
+    text = re.sub(r'\*\*Instructions.*$', '', text, flags=re.DOTALL)
+    text = re.sub(r"content_type='str'.*$", '', text, flags=re.DOTALL)
+    
+    # Fix markdown headers
+    # Replace #** with #
+    text = re.sub(r'#\*\*', '#', text)
+    # Remove standalone ** before headers
+    text = re.sub(r'\*\*#', '#', text)
+    # Remove ** around section titles
+    text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)
+    
+    # Ensure proper header spacing and format
+    lines = []
+    for line in text.split('\n'):
+        line = line.strip()
+        if line:
+            # Proper header formatting
+            if line.startswith('#'):
+                # Remove any remaining asterisks around headers
+                line = re.sub(r'\*\*([^*]+)\*\*', r'\1', line)
+                # Ensure space after #
+                line = re.sub(r'#([^ ])', r'# \1', line)
+                lines.extend(['', line, ''])
+            else:
+                # Clean up bullet points
+                if line.startswith('*'):
+                    line = re.sub(r'^\*\s*', '* ', line)
+                lines.append(line)
+    
+    # Join lines and clean up multiple newlines
+    text = '\n'.join(lines)
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    
+    # Clean up source links
+    text = re.sub(r'\[(\d+)\]', r'[\1]:', text)
+    
+    # Final cleanup of any remaining unwanted characters
+    text = text.replace('\\n', '\n')
+    text = text.replace("\\'", "'")
+    text = re.sub(r'\*\*$', '', text)  # Remove trailing asterisks
+    text = re.sub(r"'$", '', text)     # Remove trailing quote
+    
+    return text.strip()
+
+def format_markdown_sections(text):
+    """Format markdown sections with proper spacing and hierarchy"""
+    sections = {
+        'Current Situation': [
+            'Detailed Overview of the Disaster',
+            'Key Statistics and Timeline',
+            'Severity and Scale of the Impact',
+            'Current Status of Emergency Response'
+        ],
+        'Affected Areas': [
+            'Specific Regions and Communities Impacted',
+            'Population Affected',
+            'Infrastructure Damage Assessment',
+            'Economic Impact Estimates'
+        ],
+        'Environmental Impacts': [
+            'Immediate Environmental Effects',
+            'Long-term Environmental Concerns',
+            'Wildlife and Ecosystem Impacts',
+            'Climate and Weather Implications'
+        ],
+        'Ongoing Relief Efforts': [
+            'Emergency Response Operations',
+            'Organizations Involved',
+            'Resources Deployed',
+            'Recovery Progress and Challenges'
+        ],
+        'Recommendations': [
+            'For Government Agencies',
+            'For NGOs',
+            'For Individual Citizens'
+        ],
+        'Sources': []
+    }
+    
+    formatted_text = []
+    current_section = None
+    
+    for line in text.split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+            
+        # Main section headers
+        if line.startswith('# '):
+            section_title = line[2:].strip()
+            if section_title in sections:
+                current_section = section_title
+                formatted_text.extend(['', f'# {section_title}', ''])
+                
+        # Subsection headers
+        elif line.startswith('## '):
+            formatted_text.extend(['', line, ''])
+            
+        # Content
+        else:
+            formatted_text.append(line)
+    
+    return '\n'.join(formatted_text)
 
 # Web Search Agent for real-time updates
 web_search_agent = Agent(
@@ -80,10 +133,12 @@ web_search_agent = Agent(
     model=Groq(id="llama-3.1-8b-instant"),
     tools=[DuckDuckGo()],
     instructions=[
-        "Search for latest news and updates about the specified disaster",
-        "Focus on verified sources and official reports",
-        "Collect information about current status and immediate impacts",
-        "Return information in a clear, narrative format",
+        "Search extensively for the latest disaster information",
+        "Include specific details: dates, numbers, statistics",
+        "Gather information from multiple reliable sources",
+        "Track the chronological development of the disaster",
+        "Include source citations for key information",
+        "Focus on verified facts and official statements",
     ],
     show_tool_calls=True,
     verbose=True,
@@ -97,11 +152,14 @@ research_agent = Agent(
     tools=[DuckDuckGo(), Newspaper4k()],
     description="Expert in Emergency Management and Humanitarian Crisis Research",
     instructions=[
-        "Research and analyze disaster response strategies",
-        "Focus on relief efforts and recovery plans",
-        "Gather information about environmental impacts",
-        "Identify recommendations for different stakeholders",
-        "Present information in a clear, narrative format without raw data",
+        "Conduct thorough analysis of disaster impacts and responses",
+        "Include detailed statistics and damage assessments",
+        "Research historical context and similar past events",
+        "Analyze economic implications and recovery timelines",
+        "Study environmental and social impacts",
+        "Document specific relief organizations and their efforts",
+        "Include expert opinions and scientific data",
+        "Cite sources for key findings and statistics",
     ],
     show_tool_calls=True,
     verbose=True,
@@ -113,31 +171,61 @@ synthesis_agent = Agent(
     role="Synthesize and structure disaster information",
     model=Groq(id="llama-3.1-8b-instant"),
     instructions=[
-        "Combine and structure information into a clean markdown report",
-        "Format the report exactly as follows:",
-        "",
+        "Create a comprehensive, well-structured report with these sections:",
+        
         "# Current Situation",
-        "<situation content>",
-        "",
+        "- Detailed overview of the disaster",
+        "- Key statistics and timeline",
+        "- Severity and scale of the impact",
+        "- Current status of emergency response",
+        
         "# Affected Areas",
-        "<areas content>",
-        "",
+        "- Specific regions and communities impacted",
+        "- Population affected (numbers and demographics)",
+        "- Infrastructure damage assessment",
+        "- Economic impact estimates",
+        
         "# Environmental Impacts",
-        "<impacts content>",
-        "",
+        "- Immediate environmental effects",
+        "- Long-term environmental concerns",
+        "- Wildlife and ecosystem impacts",
+        "- Climate and weather implications",
+        
         "# Ongoing Relief Efforts",
-        "<efforts content>",
-        "",
+        "- Emergency response operations",
+        "- Organizations involved (with specific details)",
+        "- Resources deployed",
+        "- International aid and support",
+        "- Recovery progress and challenges",
+        
         "# Recommendations",
-        "",
+        
         "## For Government Agencies",
-        "<government recommendations>",
-        "",
+        "- Immediate action items",
+        "- Long-term strategic recommendations",
+        "- Resource allocation suggestions",
+        "- Policy implications",
+        
         "## For NGOs",
-        "<ngo recommendations>",
-        "",
+        "- Priority areas for intervention",
+        "- Coordination strategies",
+        "- Resource mobilization approaches",
+        "- Long-term support programs",
+        
         "## For Individual Citizens",
-        "<citizen recommendations>"
+        "- Safety measures and precautions",
+        "- Ways to help and contribute",
+        "- Preparation recommendations",
+        "- Community support initiatives",
+        
+        "# Sources",
+        "- List all sources with dates",
+        "- Include official websites and news sources",
+        
+        "Ensure comprehensive coverage of each section with specific details.",
+        "Use clear, professional language.",
+        "Include relevant statistics and data.",
+        "Maintain proper markdown formatting.",
     ],
     show_tool_calls=False,
     verbose=True,
@@ -145,7 +233,7 @@ synthesis_agent = Agent(
 )
 
 def format_query(filters):
-    """Format the search query based on filters"""
+    """Format detailed search queries based on filters"""
     timeframe_map = {
         "24h": "24 hours",
         "7d": "7 days",
@@ -157,16 +245,18 @@ def format_query(filters):
     
     return {
         'search_query': (
-            f"Latest updates on {filters['disasterType']} {location_part} {time_part}. "
-            "Provide information in a clear narrative format without raw data."
+            f"Comprehensive search for {filters['disasterType']} {location_part} {time_part}. "
+            f"Include latest updates, statistics, damage assessments, and official statements. "
+            f"Focus on specific details and verified information from multiple sources."
         ),
         'research_query': (
-            f"Analysis of {filters['disasterType']} impacts and response efforts {location_part} {time_part}. "
-            "Present findings in a narrative format without raw data or URLs."
+            f"In-depth analysis of {filters['disasterType']} {location_part} {time_part}. "
+            f"Research impacts, response efforts, environmental effects, economic implications, "
+            f"and historical context. Include expert opinions and scientific data."
         ),
         'synthesis_query': (
-            f"Create a comprehensive report on the {filters['disasterType']} situation {location_part} {time_part}. "
-            "Format as a clean markdown document with proper sections."
+            f"Create a detailed report on the {filters['disasterType']} situation {location_part} {time_part}. "
+            f"Combine all gathered information into a comprehensive analysis with proper citations."
         )
     }
 
@@ -185,36 +275,36 @@ def generate_summary():
         queries = format_query(filters)
 
         try:
-            # Step 1: Gather current information
-            logger.info("Gathering current information...")
+            # Step 1: Gather current information with expanded details
+            logger.info("Gathering detailed current information...")
             current_info = web_search_agent.run(queries['search_query'])
 
-            # Step 2: Research response and impacts
-            logger.info("Researching response and impacts...")
+            # Step 2: Conduct in-depth research
+            logger.info("Conducting comprehensive research...")
             research_info = research_agent.run(queries['research_query'])
 
-            # Step 3: Synthesize information
-            logger.info("Synthesizing information...")
+            # Step 3: Synthesize detailed report
+            logger.info("Creating comprehensive report...")
             synthesis_prompt = (
-                f"Based on these inputs:\n\n"
+                f"Create a detailed, well-structured report using this information:\n\n"
                 f"CURRENT INFORMATION:\n{current_info}\n\n"
-                f"RESEARCH INFORMATION:\n{research_info}\n\n"
-                f"Create a comprehensive report following the specified structure. "
-                f"Ensure proper markdown formatting and remove any raw data or metadata."
+                f"RESEARCH FINDINGS:\n{research_info}\n\n"
+                f"Ensure comprehensive coverage of all sections with specific details, "
+                f"statistics, and proper source citations. Format in clean markdown."
             )
             final_report = synthesis_agent.run(synthesis_prompt)
 
             if not final_report:
                 raise ValueError("No response generated from synthesis agent")
-
+            logger.info("Successfully generated comprehensive summary")
+            
             # Clean and format the final report
             cleaned_report = clean_response(str(final_report))
-            
-            logger.info("Successfully generated summary")
-            
+            formatted_report = format_markdown_sections(cleaned_report)
+
             return jsonify({
                 'status': 'success',
-                'summary': cleaned_report
+                'summary': formatted_report
             })
 
         except Exception as agent_error:
