@@ -2,6 +2,14 @@
 
 CrisisGen is a web application designed to provide real-time disaster management solutions. It leverages advanced AI technologies to generate disaster summaries, coordinate responses, and facilitate communication among stakeholders, including citizens, NGOs, and government agencies.
 
+## Objective
+
+To design an AI system that helps stakeholders (citizens, NGOs, and governments) during disasters by:
+
+- Generating real-time disaster summaries.
+- Suggesting actionable plans based on the severity and nature of the disaster.
+- Creating custom communication templates for affected populations or response teams.
+
 ## Table of Contents
 
 - [Features](#features)
@@ -15,16 +23,54 @@ CrisisGen is a web application designed to provide real-time disaster management
 
 ## Features
 
-- **Real-time Disaster Tracking**: Monitor disasters as they unfold with advanced mapping.
-- **Automated Summary Generation**: Generate comprehensive disaster summaries based on user-defined filters.
-- **User Segmentation**: Tailored solutions for citizens, NGOs, and government agencies.
-- **Live Analytics**: Get real-time insights and predictive analysis for better decision-making.
-- **Smart Communication**: Automated alerts and communication templates for quick deployment.
+### Pages in the Website
+
+1. **Home Page** (`/src/pages/Home.tsx`):
+   - Introduces the platform, its features, and how it works.
+   - Key Features:
+     - Hero Section with a striking headline and dynamic map.
+     - Overview of features like real-time disaster summaries and action plan generator.
+     - User segmentation options for tailored content.
+
+2. **Dashboard Page** (`/src/pages/Dashboard.tsx`):
+   - Displays real-time disaster information and tools for generating summaries, plans, and templates.
+   - Key Features:
+     - Interactive map with disaster markers.
+     - Live disaster feed with filtering options.
+     - Action buttons for generating summaries and creating action plans.
+
+3. **Action Plan Generator Page** (`/src/pages/ActionPlan.tsx`):
+   - Allows users to create and customize detailed action plans.
+   - Key Features:
+     - Input form for disaster type, affected regions, and available resources.
+     - Display of AI-generated action plans.
+
+4. **Communication Template Page** (`/src/pages/Communication.tsx`):
+   - Generates and customizes alerts, updates, or resource requests.
+   - Key Features:
+     - Template options for alerts and resource appeals.
+     - Customization panel for editable fields.
+
+5. **Insights and Analytics Page** (`/src/pages/Insights.tsx`):
+   - Provides visual and statistical insights for policymakers or NGOs.
+   - Key Features:
+     - Graphs and charts for affected population trends.
+     - Predictive analytics for disaster-prone areas.
+
+6. **About Us Page** (`/src/pages/About.tsx`):
+   - Explains the mission and vision behind CrisisGen.
+   - Key Features:
+     - Introduction to the team and collaboration opportunities.
+
+7. **Contact Us Page** (`/src/pages/Contact.tsx`):
+   - Allows users to get in touch for queries, feedback, or partnerships.
+   - Key Features:
+     - Contact form and direct contact information.
 
 ## Technologies Used
 
 - **Frontend**: React, Tailwind CSS, Framer Motion
-- **Backend**: Flask, Python
+- **Backend**: Flask, Python, GenAI
 - **Database**: SQLite (or any other database you choose)
 - **Deployment**: Vercel (for frontend), Heroku (for backend) or any other cloud service
 
@@ -105,6 +151,60 @@ To set up the project locally, follow these steps:
       "summary": "string"
     }
     ```
+
+## Feature Requirement
+
+- We are creating the summary in the backend using GenAI.
+- There is a Backend folder that contains functionality for the summary, and further functionality is to be added.
+
+## Current File Structure
+
+```
+CRISISGEN
+│
+├── .bolt
+│
+├── Backend
+│   ├── venv
+│   ├── .env
+│   ├── app.py
+│   └── requirements.txt
+│
+├── node_modules
+│
+└── src
+    ├── components
+    │   ├── Footer.tsx
+    │   └── Navbar.tsx
+    │
+    └── pages
+        ├── About.tsx
+        ├── ActionPlan.tsx
+        ├── Communication.tsx
+        ├── Contact.tsx
+        ├── Home.tsx
+        ├── Dashboard.tsx
+        └── Insights.tsx
+    │
+    ├── App.tsx
+    ├── index.css
+    ├── main.tsx
+    ├── styles.css
+    ├── vite-env.d.ts
+    │
+    ├── .gitignore
+    ├── Instructions.md
+    ├── index.html
+    ├── package-lock.json
+    ├── package.json
+    ├── postcss.config.js
+    ├── README.md
+    ├── tailwind.config.js
+    ├── tsconfig.app.json
+    ├── tsconfig.json
+    ├── tsconfig.node.json
+    └── vite.config.ts
+```
 
 ## Contributing
 
