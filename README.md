@@ -70,9 +70,9 @@ To design an AI system that helps stakeholders (citizens, NGOs, and governments)
 ## Technologies Used
 
 - **Frontend**: React, Tailwind CSS, Framer Motion
-- **Backend**: Flask, Python, GenAI
-- **Database**: SQLite (or any other database you choose)
-- **Deployment**: Vercel (for frontend), Heroku (for backend) or any other cloud service
+- **Backend**: Flask, Python, Llama (GenAi)
+- **Database**: SQLite 
+- **Deployment**: Vercel (for frontend), Heroku (for backend) 
 
 ## Installation
 
@@ -151,60 +151,6 @@ To set up the project locally, follow these steps:
       "summary": "string"
     }
     ```
-
-## Feature Requirement
-
-- We are creating the summary in the backend using GenAI.
-- There is a Backend folder that contains functionality for the summary, and further functionality is to be added.
-
-## Current File Structure
-
-```
-CRISISGEN
-│
-├── .bolt
-│
-├── Backend
-│   ├── venv
-│   ├── .env
-│   ├── app.py
-│   └── requirements.txt
-│
-├── node_modules
-│
-└── src
-    ├── components
-    │   ├── Footer.tsx
-    │   └── Navbar.tsx
-    │
-    └── pages
-        ├── About.tsx
-        ├── ActionPlan.tsx
-        ├── Communication.tsx
-        ├── Contact.tsx
-        ├── Home.tsx
-        ├── Dashboard.tsx
-        └── Insights.tsx
-    │
-    ├── App.tsx
-    ├── index.css
-    ├── main.tsx
-    ├── styles.css
-    ├── vite-env.d.ts
-    │
-    ├── .gitignore
-    ├── Instructions.md
-    ├── index.html
-    ├── package-lock.json
-    ├── package.json
-    ├── postcss.config.js
-    ├── README.md
-    ├── tailwind.config.js
-    ├── tsconfig.app.json
-    ├── tsconfig.json
-    ├── tsconfig.node.json
-    └── vite.config.ts
-```
 
 ## Contributing
 

@@ -1,5 +1,5 @@
-from phi.agent import Agent
-from phi.model.groq import Groq
+from phi.agent import Agent, RunResponse
+from phi.model.together import Together
 from phi.tools.duckduckgo import DuckDuckGo
 from phi.tools.newspaper4k import Newspaper4k
 from dotenv import load_dotenv
@@ -130,7 +130,7 @@ def format_markdown_sections(text):
 web_search_agent = Agent(
     name="Web Search Agent",
     role="Search the web for disaster-related news and information",
-    model=Groq(id="llama-3.1-8b-instant"),
+    model=Together(id="meta-llama/Llama-3.3-70B-Instruct-Turbo-Free"),
     tools=[DuckDuckGo()],
     instructions=[
         "Search extensively for the latest disaster information",
@@ -148,7 +148,7 @@ web_search_agent = Agent(
 research_agent = Agent(
     name="Research Agent",
     role="Gather in-depth disaster response research",
-    model=Groq(id="llama-3.1-8b-instant"),
+    model=Together(id="meta-llama/Llama-3.3-70B-Instruct-Turbo-Free"),
     tools=[DuckDuckGo(), Newspaper4k()],
     description="Expert in Emergency Management and Humanitarian Crisis Research",
     instructions=[
@@ -169,7 +169,7 @@ research_agent = Agent(
 synthesis_agent = Agent(
     name="Synthesis Agent",
     role="Synthesize and structure disaster information",
-    model=Groq(id="llama-3.1-8b-instant"),
+    model=Together(id="meta-llama/Llama-3.3-70B-Instruct-Turbo-Free"),
     instructions=[
         "Create a comprehensive, well-structured report with these sections:",
         
@@ -277,29 +277,29 @@ def generate_summary():
         try:
             # Step 1: Gather current information with expanded details
             logger.info("Gathering detailed current information...")
-            current_info = web_search_agent.run(queries['search_query'])
+            current_info: RunResponse = web_search_agent.run(queries['search_query'])
 
             # Step 2: Conduct in-depth research
             logger.info("Conducting comprehensive research...")
-            research_info = research_agent.run(queries['research_query'])
+            research_info: RunResponse = research_agent.run(queries['research_query'])
 
             # Step 3: Synthesize detailed report
             logger.info("Creating comprehensive report...")
             synthesis_prompt = (
                 f"Create a detailed, well-structured report using this information:\n\n"
-                f"CURRENT INFORMATION:\n{current_info}\n\n"
-                f"RESEARCH FINDINGS:\n{research_info}\n\n"
+                f"CURRENT INFORMATION:\n{current_info.content}\n\n"
+                f"RESEARCH FINDINGS:\n{research_info.content}\n\n"
                 f"Ensure comprehensive coverage of all sections with specific details, "
                 f"statistics, and proper source citations. Format in clean markdown."
             )
-            final_report = synthesis_agent.run(synthesis_prompt)
+            final_report: RunResponse = synthesis_agent.run(synthesis_prompt)
 
             if not final_report:
                 raise ValueError("No response generated from synthesis agent")
             logger.info("Successfully generated comprehensive summary")
             
             # Clean and format the final report
-            cleaned_report = clean_response(str(final_report))
+            cleaned_report = clean_response(str(final_report.content))
             formatted_report = format_markdown_sections(cleaned_report)
 
             return jsonify({

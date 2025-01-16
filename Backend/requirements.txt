@@ -10,3 +10,6 @@ lxml_html_clean
 duckdb
 flask
 flask-cors
+huggingface_hub
+together 
+openai 
