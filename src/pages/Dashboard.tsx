@@ -1,111 +1,313 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import Map from 'react-map-gl';
-import { AlertTriangle, FileText, Send } from 'lucide-react';
+import { 
+  AlertTriangle, FileText, Send, Users, Clock, 
+  Shield, Activity, BarChart3, ArrowUp, ArrowDown,
+  MapPin, Building, Radio, Bell, ChevronRight
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+
+const quickStats = [
+  { 
+    label: "Active Disasters",
+    value: "12",
+    change: "+2",
+    trend: "up",
+    icon: AlertTriangle,
+    color: "text-orange-400",
+    bg: "bg-orange-500/10"
+  },
+  { 
+    label: "Response Teams",
+    value: "45",
+    change: "+5",
+    trend: "up",
+    icon: Users,
+    color: "text-blue-400",
+    bg: "bg-blue-500/10"
+  },
+  { 
+    label: "Avg Response Time",
+    value: "8.5m",
+    change: "-2.3",
+    trend: "down",
+    icon: Clock,
+    color: "text-green-400",
+    bg: "bg-green-500/10"
+  },
+  { 
+    label: "Resources Deployed",
+    value: "1.2k",
+    change: "+123",
+    trend: "up",
+    icon: Shield,
+    color: "text-purple-400",
+    bg: "bg-purple-500/10"
+  }
+];
+
+const activeDisasters = [
+  {
+    name: "Flood in Southeast Asia",
+    type: "Flood",
+    severity: "Critical",
+    location: "Vietnam, Cambodia",
+    affectedPeople: "25,000+",
+    timestamp: "2 hours ago",
+    color: "bg-red-500/20 text-red-400"
+  },
+  {
+    name: "Wildfire in California",
+    type: "Fire",
+    severity: "High",
+    location: "Northern California, USA",
+    affectedPeople: "12,000+",
+    timestamp: "5 hours ago",
+    color: "bg-orange-500/20 text-orange-400"
+  },
+  {
+    name: "Earthquake in Japan",
+    type: "Earthquake",
+    severity: "Medium",
+    location: "Osaka Region, Japan",
+    affectedPeople: "8,000+",
+    timestamp: "1 day ago",
+    color: "bg-yellow-500/20 text-yellow-400"
+  }
+];
+
+const recentAlerts = [
+  {
+    title: "Emergency Evacuation",
+    location: "Coastal Region, Vietnam",
+    type: "Critical",
+    time: "10 minutes ago",
+    icon: Bell,
+    color: "text-red-400"
+  },
+  {
+    title: "Resource Deployment",
+    location: "Northern California",
+    type: "Update",
+    time: "25 minutes ago",
+    icon: Send,
+    color: "text-blue-400"
+  },
+  {
+    title: "Situation Update",
+    location: "Osaka, Japan",
+    type: "Info",
+    time: "1 hour ago",
+    icon: Radio,
+    color: "text-green-400"
+  }
+];
 
 export const Dashboard = () => {
   const navigate = useNavigate();
+  const [selectedDisaster, setSelectedDisaster] = useState(null);
 
-  const handleGenerateSummary = () => {
-    navigate('/generate-summary');
-  };
+  const mainActions = [
+    { 
+      title: "Generate Summary", 
+      icon: FileText, 
+      onClick: () => navigate('/generate-summary'),
+      color: "bg-primary hover:bg-primary-dark"
+    },
+    { 
+      title: "Create Action Plan", 
+      icon: AlertTriangle, 
+      onClick: () => navigate('/action-plan'),
+      color: "bg-secondary hover:bg-secondary-dark"
+    },
+    { 
+      title: "Send Alert", 
+      icon: Send, 
+      onClick: () => navigate('/communication'),
+      color: "bg-success hover:bg-success-dark"
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800">
       <div className="pt-20 px-6 max-w-8xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Sidebar */}
-          <div className="lg:col-span-1 space-y-6">
-            <motion.div 
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="bg-white/5 backdrop-blur-lg rounded-2xl p-6 border border-white/10"
-            >
-              <h2 className="text-2xl font-heading font-bold text-primary-light mb-6">
-                Active Disasters
-              </h2>
-              <div className="space-y-4">
-                {[
-                  { name: 'Flood in Southeast Asia', severity: 'High', type: 'Flood' },
-                  { name: 'Wildfire in California', severity: 'Critical', type: 'Fire' },
-                  { name: 'Earthquake in Japan', severity: 'Medium', type: 'Earthquake' }
-                ].map((disaster, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="bg-white/5 rounded-xl p-4 hover:bg-white/10 transition-all duration-300"
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6"
+        >
+          {/* Top Action Bar */}
+          <div className="bg-white/5 backdrop-blur-lg rounded-2xl p-4 border border-white/10">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div>
+                <h1 className="text-2xl font-heading font-bold text-primary-light">Disaster Response Dashboard</h1>
+                <p className="text-neutral-light">Real-time monitoring and response management</p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {mainActions.map((action, idx) => (
+                  <motion.button
+                    key={idx}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.1 }}
+                    onClick={action.onClick}
+                    className={`${action.color} text-white px-6 py-3 rounded-xl 
+                      flex items-center gap-2 transition-all duration-300 
+                      hover:scale-105 active:scale-95`}
                   >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="text-primary-light font-medium">{disaster.name}</h3>
-                        <p className="text-neutral-light text-sm mt-1">Type: {disaster.type}</p>
-                      </div>
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        disaster.severity === 'Critical' ? 'bg-secondary/20 text-secondary-light' :
-                        disaster.severity === 'High' ? 'bg-secondary-dark/20 text-secondary' :
-                        'bg-neutral/20 text-neutral-light'
-                      }`}>
+                    <action.icon className="w-5 h-5" />
+                    <span className="font-medium">{action.title}</span>
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Main Content */}
+          <div className="lg:col-span-8 space-y-6">
+            {/* Quick Stats */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {quickStats.map((stat, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.1 }}
+                  className={`${stat.bg} backdrop-blur-lg rounded-2xl p-4 border border-white/10`}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <stat.icon className={`w-6 h-6 ${stat.color}`} />
+                    <span className={`text-xs font-medium flex items-center gap-1 ${
+                      stat.trend === 'up' ? 'text-green-400' : 'text-red-400'
+                    }`}>
+                      {stat.trend === 'up' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
+                      {stat.change}
+                    </span>
+                  </div>
+                  <h3 className="text-2xl font-bold text-primary-light">{stat.value}</h3>
+                  <p className="text-sm text-neutral-light mt-1">{stat.label}</p>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Map Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white/5 backdrop-blur-lg rounded-2xl border border-white/10"
+            >
+              <div className="p-4 border-b border-white/10">
+                <h2 className="text-xl font-heading font-bold text-primary-light">Disaster Map</h2>
+              </div>
+              <div className="p-4">
+                <div className="h-[500px] rounded-xl overflow-hidden">
+                  <Map
+                    initialViewState={{
+                      longitude: -100,
+                      latitude: 40,
+                      zoom: 3.5
+                    }}
+                    style={{width: '100%', height: '100%'}}
+                    mapStyle="mapbox://styles/mapbox/dark-v11"
+                  />
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Activity Chart */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white/5 backdrop-blur-lg rounded-2xl border border-white/10 p-4"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-heading font-bold text-primary-light">Response Activity</h2>
+                <Activity className="w-5 h-5 text-primary-light" />
+              </div>
+              <div className="h-[200px] flex items-center justify-center">
+                <BarChart3 className="w-8 h-8 text-neutral-light opacity-50" />
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Sidebar */}
+          <div className="lg:col-span-4 space-y-6">
+            {/* Active Disasters */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="bg-white/5 backdrop-blur-lg rounded-2xl border border-white/10"
+            >
+              <div className="p-4 border-b border-white/10">
+                <h2 className="text-xl font-heading font-bold text-primary-light">Active Disasters</h2>
+              </div>
+              <div className="p-4 space-y-4">
+                {activeDisasters.map((disaster, idx) => (
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: idx * 0.1 }}
+                    className="bg-white/5 rounded-xl p-4 hover:bg-white/10 transition-all duration-300 cursor-pointer"
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-medium text-primary-light">{disaster.name}</h3>
+                      <span className={`px-2 py-1 rounded-full text-xs ${disaster.color}`}>
                         {disaster.severity}
                       </span>
+                    </div>
+                    <div className="space-y-2 text-sm text-neutral-light">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4" />
+                        {disaster.location}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4" />
+                        {disaster.affectedPeople} affected
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4" />
+                        {disaster.timestamp}
+                      </div>
                     </div>
                   </motion.div>
                 ))}
               </div>
             </motion.div>
 
-            {/* Quick Actions */}
-            <motion.div 
-              initial={{ opacity: 0, x: -20 }}
+            {/* Recent Alerts */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-white/5 backdrop-blur-lg rounded-2xl p-6 border border-white/10"
+              className="bg-white/5 backdrop-blur-lg rounded-2xl border border-white/10"
             >
-              <h2 className="text-2xl font-heading font-bold text-primary-light mb-6">
-                Quick Actions
-              </h2>
-              <div className="space-y-3">
-                <button 
-                  onClick={handleGenerateSummary}
-                  className="w-full bg-primary hover:bg-primary-dark text-white rounded-xl p-4 flex items-center justify-center space-x-3 transition-colors duration-300"
-                >
-                  <AlertTriangle className="w-5 h-5" />
-                  <span>Generate Summary</span>
-                </button>
-                <button className="w-full bg-secondary hover:bg-secondary-dark text-white rounded-xl p-4 flex items-center justify-center space-x-3 transition-colors duration-300">
-                  <FileText className="w-5 h-5" />
-                  <span>Create Action Plan</span>
-                </button>
-                <button className="w-full bg-success hover:bg-success-dark text-white rounded-xl p-4 flex items-center justify-center space-x-3 transition-colors duration-300">
-                  <Send className="w-5 h-5" />
-                  <span>Send Alert</span>
-                </button>
+              <div className="p-4 border-b border-white/10">
+                <h2 className="text-xl font-heading font-bold text-primary-light">Recent Alerts</h2>
               </div>
-            </motion.div>
-          </div>
-
-          {/* Main Content - Map */}
-          <div className="lg:col-span-3">
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white/5 backdrop-blur-lg rounded-2xl p-6 border border-white/10"
-            >
-              <h2 className="text-2xl font-heading font-bold text-primary-light mb-6">
-                Disaster Map
-              </h2>
-              <div className="h-[600px] rounded-xl overflow-hidden">
-                <Map
-                  initialViewState={{
-                    longitude: -100,
-                    latitude: 40,
-                    zoom: 3.5
-                  }}
-                  style={{width: '100%', height: '100%'}}
-                  mapStyle="mapbox://styles/mapbox/dark-v11"
-                />
+              <div className="p-4 space-y-4">
+                {recentAlerts.map((alert, idx) => (
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: idx * 0.1 }}
+                    className="flex items-center gap-4 bg-white/5 rounded-xl p-4 hover:bg-white/10 transition-all duration-300 cursor-pointer"
+                  >
+                    <div className={`p-2 rounded-lg ${alert.color} bg-opacity-20`}>
+                      <alert.icon className={`w-5 h-5 ${alert.color}`} />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-medium text-primary-light">{alert.title}</h3>
+                      <p className="text-sm text-neutral-light">{alert.location}</p>
+                      <span className="text-xs text-neutral-light">{alert.time}</span>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-neutral-light" />
+                  </motion.div>
+                ))}
               </div>
             </motion.div>
           </div>
