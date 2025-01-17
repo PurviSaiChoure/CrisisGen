@@ -1,13 +1,59 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { 
+  FileText, Search, Clock, Globe, AlertTriangle, 
+  BookOpen, Download, Share2, Loader, ArrowRight, Users, Shield 
+} from 'lucide-react';
 
 interface SummaryFilters {
   disasterType: string;
   location: string;
   timeframe: string;
+  scope: string;
+  focus: string;
 }
 
-const API_URL = 'http://127.0.0.1:5000';
+const API_URL = 'http://localhost:5000';
+
+const disasterTypes = [
+  { value: 'all', label: 'All Disasters', icon: AlertTriangle },
+  { value: 'flood', label: 'Floods', icon: AlertTriangle },
+  { value: 'earthquake', label: 'Earthquakes', icon: AlertTriangle },
+  { value: 'wildfire', label: 'Wildfires', icon: AlertTriangle },
+  { value: 'hurricane', label: 'Hurricanes', icon: AlertTriangle }
+];
+
+const timeframes = [
+  { value: 'past_day', label: '24 Hours', icon: Clock },
+  { value: 'past_week', label: 'Past Week', icon: Clock },
+  { value: 'past_month', label: 'Past Month', icon: Clock },
+  { value: 'past_year', label: 'Past Year', icon: Clock }
+];
+
+const scopes = [
+  { value: 'local', label: 'Local', icon: Globe },
+  { value: 'regional', label: 'Regional', icon: Globe },
+  { value: 'national', label: 'National', icon: Globe },
+  { value: 'global', label: 'Global', icon: Globe }
+];
+
+const focusAreas = [
+  { value: 'impact', label: 'Impact Assessment', icon: AlertTriangle },
+  { value: 'response', label: 'Response Efforts', icon: AlertTriangle },
+  { value: 'recovery', label: 'Recovery Progress', icon: AlertTriangle },
+  { value: 'lessons', label: 'Lessons Learned', icon: BookOpen }
+];
+
+// Add new interface for structured summary sections
+interface StructuredSummary {
+  overview: string;
+  currentSituation: string;
+  impactAssessment: string;
+  responseEfforts: string;
+  challenges: string;
+  recommendations: string;
+  sources: string[];
+}
 
 export const GenerateSummary = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -15,16 +61,28 @@ export const GenerateSummary = () => {
   const [summaryFilters, setSummaryFilters] = useState<SummaryFilters>({
     disasterType: '',
     location: '',
-    timeframe: ''
+    timeframe: '',
+    scope: '',
+    focus: ''
   });
   const [summary, setSummary] = useState<string>('');
+  const [serverStatus, setServerStatus] = useState<'checking' | 'online' | 'offline'>('checking');
+  const [structuredSummary, setStructuredSummary] = useState<StructuredSummary | null>(null);
+
+  useEffect(() => {
+    checkServerStatus();
+  }, []);
+
+  const checkServerStatus = async () => {
+    try {
+      const response = await fetch(`${API_URL}/health`);
+      setServerStatus(response.ok ? 'online' : 'offline');
+    } catch (error) {
+      setServerStatus('offline');
+    }
+  };
 
   const handleGenerateSummary = async () => {
-    if (!summaryFilters.disasterType) {
-      setError('Please select a disaster type');
-      return;
-    }
-
     setIsLoading(true);
     setError('');
     setSummary('');
@@ -40,183 +98,220 @@ export const GenerateSummary = () => {
 
       const data = await response.json();
 
-      if (data.status === 'success' && data.summary) {
+      if (response.ok && data.status === 'success') {
         setSummary(data.summary);
+        // Parse the markdown summary into structured sections
+        parseStructuredSummary(data.summary);
       } else {
-        setError(data.error || 'Failed to generate summary');
+        throw new Error(data.error || 'Failed to generate summary');
       }
     } catch (error) {
-      console.error('Error:', error);
-      setError('Failed to generate summary');
+      setError(error instanceof Error ? error.message : 'Failed to generate summary');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const renderSummarySection = (section: string) => {
-    const [title, ...content] = section.split('\n');
-    const titleText = title.replace(/^#+\s+/, '');
-    const headingLevel = (title.match(/^#+/) || [''])[0].length;
-    
-    const sectionStyle = headingLevel === 1 
-      ? "bg-gray-800/50 rounded-xl p-8 border border-gray-700"
-      : "pl-8 py-6";
-
-    return (
-      <div className={sectionStyle}>
-        <h3 className={`font-heading font-bold mb-6 ${
-          headingLevel === 1 ? 'text-3xl text-primary-light' : 'text-2xl text-gray-300'
-        }`}>
-          {titleText}
-        </h3>
-        <div className="prose prose-invert prose-lg max-w-none">
-          {content.filter(Boolean).map((paragraph, idx) => {
-            if (paragraph.startsWith('*')) {
-              return (
-                <ul key={idx} className="list-disc pl-8 mb-6 text-gray-300 text-lg">
-                  <li className="mb-3">{paragraph.replace(/^\*\s+/, '')}</li>
-                </ul>
-              );
-            }
-            return (
-              <p key={idx} className="mb-6 text-gray-300 text-lg leading-relaxed">
-                {paragraph}
-              </p>
-            );
-          })}
-        </div>
-      </div>
-    );
+  // Add function to parse summary into sections
+  const parseStructuredSummary = (markdownContent: string) => {
+    // This is a simple parser, adjust based on your actual markdown structure
+    const sections = markdownContent.split(/(?=# )/);
+    const structured: StructuredSummary = {
+      overview: sections.find(s => s.includes('Overview'))?.replace('# Overview', '').trim() || '',
+      currentSituation: sections.find(s => s.includes('Current Situation'))?.replace('# Current Situation', '').trim() || '',
+      impactAssessment: sections.find(s => s.includes('Impact Assessment'))?.replace('# Impact Assessment', '').trim() || '',
+      responseEfforts: sections.find(s => s.includes('Response Efforts'))?.replace('# Response Efforts', '').trim() || '',
+      challenges: sections.find(s => s.includes('Challenges'))?.replace('# Challenges', '').trim() || '',
+      recommendations: sections.find(s => s.includes('Recommendations'))?.replace('# Recommendations', '').trim() || '',
+      sources: sections.find(s => s.includes('Sources'))?.replace('# Sources', '').trim().split('\n') || [],
+    };
+    setStructuredSummary(structured);
   };
 
-  const renderSummaryContent = () => {
-    if (!summary) return null;
-
-    const sections = summary.split(/(?=^#\s+)/m);
-    return (
-      <div className="space-y-10">
-        {sections.filter(Boolean).map((section, idx) => (
-          <motion.div
-            key={idx}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.1 }}
+  const renderSectionButtons = (
+    title: string,
+    options: Array<{ value: string; label: string; icon: React.ElementType }>,
+    stateKey: keyof SummaryFilters
+  ) => (
+    <div className="space-y-2">
+      <label className="text-sm font-medium text-neutral-light">{title}</label>
+      <div className="grid grid-cols-2 gap-2">
+        {options.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => setSummaryFilters({ ...summaryFilters, [stateKey]: option.value })}
+            className={`p-3 rounded-xl border transition-all duration-300 flex items-center space-x-2
+              ${summaryFilters[stateKey] === option.value 
+                ? 'bg-primary/20 border-primary-light text-primary-light' 
+                : 'bg-white/5 border-white/10 text-neutral-light hover:bg-white/10'}`}
           >
-            {renderSummarySection(section)}
-          </motion.div>
+            <option.icon className="w-4 h-4" />
+            <span>{option.label}</span>
+          </button>
         ))}
       </div>
-    );
-  };
+    </div>
+  );
+
+  // Add new component for rendering summary sections
+  const renderSummarySection = (title: string, content: string, icon: React.ElementType, bgColor: string = 'bg-white/5') => (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`${bgColor} rounded-xl p-6 border border-white/10`}
+    >
+      <h3 className="text-xl font-heading font-semibold text-primary-light mb-4 flex items-center gap-2">
+        {React.createElement(icon, { className: "w-5 h-5" })}
+        {title}
+      </h3>
+      <div className="prose prose-invert max-w-none">
+        {content.split('\n').map((paragraph, idx) => (
+          <p key={idx} className="text-neutral-light leading-relaxed mb-4">
+            {paragraph}
+          </p>
+        ))}
+      </div>
+    </motion.div>
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800">
+      <div className="pt-20 px-6 max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-5xl mx-auto space-y-8"
+          className="space-y-6"
         >
-          {/* Input Form */}
-          <div className="bg-gray-800/30 backdrop-blur-lg rounded-2xl p-8 border border-gray-700/50 shadow-xl">
-            <h1 className="text-4xl font-heading font-bold text-primary-light mb-8 text-center">
-              Disaster Summary Generator
-            </h1>
-
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-6 p-4 bg-red-500/20 text-red-200 rounded-xl border border-red-500/30"
-              >
-                {error}
-              </motion.div>
-            )}
-
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-300">Disaster Type</label>
-                <select
-                  className="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 text-gray-200 focus:ring-2 focus:ring-primary-light/50 focus:border-primary-light transition-colors"
-                  value={summaryFilters.disasterType}
-                  onChange={(e) => setSummaryFilters({...summaryFilters, disasterType: e.target.value})}
-                >
-                  <option value="">Select Disaster Type</option>
-                  <option value="flood">Flood</option>
-                  <option value="earthquake">Earthquake</option>
-                  <option value="wildfire">Wildfire</option>
-                  <option value="hurricane">Hurricane</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-300">Location</label>
-                <input
-                  type="text"
-                  placeholder="Enter location (e.g., California, USA)"
-                  className="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 text-gray-200 focus:ring-2 focus:ring-primary-light/50 focus:border-primary-light transition-colors"
-                  value={summaryFilters.location}
-                  onChange={(e) => setSummaryFilters({...summaryFilters, location: e.target.value})}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-300">Timeframe</label>
-                <select
-                  className="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 text-gray-200 focus:ring-2 focus:ring-primary-light/50 focus:border-primary-light transition-colors"
-                  value={summaryFilters.timeframe}
-                  onChange={(e) => setSummaryFilters({...summaryFilters, timeframe: e.target.value})}
-                >
-                  <option value="">Select Timeframe</option>
-                  <option value="24h">Last 24 Hours</option>
-                  <option value="7d">Last 7 Days</option>
-                  <option value="30d">Last 30 Days</option>
-                </select>
-              </div>
-
-              <button 
-                onClick={handleGenerateSummary}
-                disabled={isLoading}
-                className={`group relative w-full overflow-hidden rounded-xl p-4 font-medium text-lg transition-all duration-300
-                  ${isLoading ? 
-                    'bg-gray-600 cursor-not-allowed' : 
-                    'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl'
-                  }`}
-              >
-                <span className="relative z-10 flex items-center justify-center space-x-3">
-                  {isLoading ? (
-                    <>
-                      <div className="animate-spin h-5 w-5 border-2 border-white/30 border-t-white rounded-full"></div>
-                      <span>Generating Summary...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="transform group-hover:scale-105 transition-transform duration-300">
-                        Generate Summary
-                      </span>
-                    </>
-                  )}
-                </span>
-                {!isLoading && (
-                  <div className="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                )}
-              </button>
-            </div>
+          {/* Header */}
+          <div className="bg-white/5 backdrop-blur-lg rounded-2xl p-6 border border-white/10">
+            <h1 className="text-3xl font-heading font-bold text-primary-light">Disaster Summary Generator</h1>
+            <p className="text-neutral-light mt-2">Generate comprehensive summaries of disaster situations and responses</p>
           </div>
 
-          {/* Summary Display */}
-          {summary && (
+          {serverStatus === 'offline' && (
+            <div className="bg-red-500/10 text-red-200 p-4 rounded-xl border border-red-500/20 mb-4">
+              Server appears to be offline. Please try again later.
+            </div>
+          )}
+
+          {error && (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="bg-gray-800/30 backdrop-blur-lg rounded-2xl p-8 border border-gray-700/50 shadow-xl"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-red-500/10 text-red-200 p-4 rounded-xl border border-red-500/20"
             >
-              <h2 className="text-3xl font-heading font-bold text-primary-light mb-8">
-                Disaster Summary Report
-              </h2>
-              {renderSummaryContent()}
+              {error}
             </motion.div>
           )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Input Form */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="bg-white/5 backdrop-blur-lg rounded-2xl p-6 border border-white/10"
+            >
+              <h2 className="text-2xl font-heading font-bold text-primary-light mb-6">Summary Parameters</h2>
+              <form onSubmit={(e) => { e.preventDefault(); handleGenerateSummary(); }} className="space-y-4">
+                {renderSectionButtons('Disaster Type', disasterTypes, 'disasterType')}
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-neutral-light">Location</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={summaryFilters.location}
+                      onChange={(e) => setSummaryFilters({ ...summaryFilters, location: e.target.value })}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl p-3 pl-10 text-gray-300 focus:outline-none focus:border-primary-light"
+                      placeholder="Enter location..."
+                    />
+                    <Globe className="w-5 h-5 text-neutral-light absolute left-3 top-3.5" />
+                  </div>
+                </div>
+
+                {renderSectionButtons('Timeframe', timeframes, 'timeframe')}
+                {renderSectionButtons('Geographic Scope', scopes, 'scope')}
+                {renderSectionButtons('Focus Area', focusAreas, 'focus')}
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className={`w-full rounded-xl p-4 flex items-center justify-center space-x-3 transition-all duration-300
+                    ${isLoading 
+                      ? 'bg-neutral cursor-not-allowed' 
+                      : 'bg-primary hover:bg-primary-dark text-white'}`}
+                >
+                  {isLoading ? (
+                    <div className="flex items-center space-x-3">
+                      <div className="animate-spin h-5 w-5 border-2 border-white/30 border-t-white rounded-full" />
+                      <span>Generating Summary...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <FileText className="w-5 h-5" />
+                      <span>Generate Summary</span>
+                    </>
+                  )}
+                </button>
+              </form>
+            </motion.div>
+
+            {/* Summary Display */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-white/5 backdrop-blur-lg rounded-2xl border border-white/10 flex flex-col"
+            >
+              <div className="p-6 border-b border-white/10">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-heading font-bold text-primary-light">Generated Summary</h2>
+                  <div className="flex space-x-2">
+                    <button className="p-2 hover:bg-white/5 rounded-lg transition-colors duration-300">
+                      <Download className="w-5 h-5 text-primary-light" />
+                    </button>
+                    <button className="p-2 hover:bg-white/5 rounded-lg transition-colors duration-300">
+                      <Share2 className="w-5 h-5 text-primary-light" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 flex-grow overflow-y-auto custom-scrollbar">
+                {structuredSummary ? (
+                  <div className="space-y-6">
+                    {renderSummarySection('Overview', structuredSummary.overview, FileText, 'bg-blue-500/10')}
+                    {renderSummarySection('Current Situation', structuredSummary.currentSituation, AlertTriangle, 'bg-red-500/10')}
+                    {renderSummarySection('Impact Assessment', structuredSummary.impactAssessment, Users, 'bg-yellow-500/10')}
+                    {renderSummarySection('Response Efforts', structuredSummary.responseEfforts, Shield, 'bg-green-500/10')}
+                    {renderSummarySection('Challenges', structuredSummary.challenges, AlertTriangle, 'bg-orange-500/10')}
+                    {renderSummarySection('Recommendations', structuredSummary.recommendations, BookOpen, 'bg-purple-500/10')}
+                    
+                    {/* Sources Section */}
+                    <div className="bg-gray-500/10 rounded-xl p-6 border border-white/10">
+                      <h3 className="text-xl font-heading font-semibold text-primary-light mb-4 flex items-center gap-2">
+                        <Search className="w-5 h-5" />
+                        Sources
+                      </h3>
+                      <ul className="space-y-2">
+                        {structuredSummary.sources.map((source, idx) => (
+                          <li key={idx} className="text-neutral-light">
+                            {source}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center text-neutral-light">
+                    <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>Generate a summary to see the analysis</p>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
         </motion.div>
       </div>
     </div>

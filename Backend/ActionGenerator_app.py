@@ -5,6 +5,7 @@ from phi.model.groq import Groq
 from phi.tools.duckduckgo import DuckDuckGo
 from phi.tools.newspaper4k import Newspaper4k
 from dotenv import load_dotenv
+from phi.model.together import Together
 import json
 import logging
 import re
@@ -32,91 +33,24 @@ class DisasterActionPlan(BaseModel):
     recommendations: List[str] = Field(..., description="Actionable recommendations for governments, NGOs, and individuals.")
 
 def initialize_agents():
-    """Initialize all agents in the system"""
+    """Initialize single agent for plan generation"""
     
-    # Reasoning Agent for analysis
-    reasoning_agent = Agent(
-        model=Groq(id="mixtral-8x7b-32768"),
-        name="Reasoning Agent",
-        role="Analyze disaster scenarios and generate logical action plans.",
-        reasoning=True,
-        markdown=True,
-        structured_outputs=True,
+    # Single comprehensive agent
+    action_plan_agent = Agent(
+        name="Action Plan Generator",
+        model=Together(id="meta-llama/Llama-3.3-70B-Instruct-Turbo-Free"),
+        description="Generate comprehensive disaster response plans",
+        structured_outputs=False,
         instructions=[
-            "Take disaster type and available resources as inputs.",
-            "Break down the response into three key sections: Immediate Actions, Resource Mobilization, and Long-term Relief Measures.",
-            "Provide clear, logical steps for each section.",
-            "Use structured bullet points or ASCII diagrams for clarity where necessary."
+            "You are a disaster response planning expert.",
+            "Generate detailed and actionable plans based on the provided scenario.",
+            "Include specific steps, resource allocation, and recommendations.",
+            "Format output as clean JSON with no additional text.",
+            "Ensure comprehensive coverage of all aspects of disaster response."
         ]
     )
 
-    # Research Agent for gathering information
-    research_agent = Agent(
-        name="Research Agent",
-        role="Gather additional information about disaster scenarios and best practices.",
-        model=Groq(id="mixtral-8x7b-32768"),
-        tool=[DuckDuckGo(), Newspaper4k()],
-        instructions=[
-            "Search for recent events and response guidelines related to the given disaster type.",
-            "Summarize actionable strategies from credible sources.",
-            "Provide links to sources for reference.",
-        ],
-        show_tool_calls=True,
-        markdown=True,
-    )
-
-    # Data Analyst Agent for resource allocation
-    data_analyst_agent = Agent(
-        name="Data Analyst Agent",
-        role="Analyze resources and allocate them efficiently in the action plan.",
-        model=Groq(id="mixtral-8x7b-32768"),
-        instructions=[
-            "Analyze the available resources and determine the most efficient allocation.",
-            "Provide visualizations or summaries of resource usage.",
-            "Focus on minimizing waste and maximizing impact during disaster response.",
-        ],
-        show_tool_calls=False,
-        markdown=True,
-    )
-
-    # RAG Agent for knowledge retrieval
-    rag_agent = Agent(
-        name="RAG Agent",
-        role="Retrieve and combine external knowledge for disaster response planning.",
-        model=Groq(id="mixtral-8x7b-32768"),
-        tool=[DuckDuckGo()],
-        instructions=[
-            "Retrieve data from external sources related to the given disaster type.",
-            "Combine the retrieved knowledge with accurate strategies to enhance the action plan.",
-            "Ensure the action plan is updated dynamically based on new information.",
-        ],
-        show_tool_calls=True,
-        markdown=True,
-    )
-
-    # Action Plan Generator Agent
-    action_plan_agent = Agent(
-        name="Action Plan Generator",
-        model=Groq(id="mixtral-8x7b-32768"),
-        description="Generate a structured disaster action plan.",
-        response_model=DisasterActionPlan,
-        structured_outputs=True,
-        instructions=[
-            "Based on the provided disaster type and resources, generate a detailed and actionable plan.",
-            "Always format the response as a valid JSON object with these exact keys:",
-            "- disaster_type (string)",
-            "- immediate_actions (array of strings)",
-            "- resource_mobilization (array of strings)",
-            "- long_term_measures (array of strings)",
-            "- stakeholders (array of strings)",
-            "- recommendations (array of strings)",
-            "Ensure all arrays contain at least 3 items.",
-            "Make all responses specific and actionable.",
-        ],
-    )
-
-    # Return all individual agents
-    return reasoning_agent, research_agent, data_analyst_agent, rag_agent, action_plan_agent
+    return action_plan_agent
 
 def extract_json_from_response(response: Any) -> Optional[Dict[str, Any]]:
     """Enhanced JSON extraction from agent response"""
@@ -160,88 +94,58 @@ def extract_json_from_response(response: Any) -> Optional[Dict[str, Any]]:
         logger.error(f"Error extracting JSON: {str(e)}")
         return None
 
-def get_fallback_plan(data: Dict[str, str]) -> Dict[str, Any]:
-    """Provide a fallback plan when agent fails"""
-    return {
-        "disaster_type": data.get('disasterType', 'Unknown'),
+def generate_action_plan_prompt(data: Dict[str, str]) -> str:
+    """Generate a focused prompt for the action plan"""
+    return f"""
+    Create a detailed disaster response plan for:
+    - Disaster Type: {data['disasterType']}
+    - Location: {data['location']}
+    - Severity: {data['severity']}
+    - Population Affected: {data['population']}
+    - Available Resources: {data['resources']}
+
+    Return a JSON object with exactly these keys:
+    {{
+        "disaster_type": "Detailed description of the disaster",
         "immediate_actions": [
-            "Evacuate affected areas immediately",
-            "Set up emergency response centers",
-            "Deploy first responder teams"
+            "5 specific, immediate actions to take",
+            "Include emergency response steps",
+            "Detail evacuation procedures",
+            "Specify medical response",
+            "Communication protocols"
         ],
         "resource_mobilization": [
-            "Mobilize medical supplies and personnel",
-            "Establish emergency shelters",
-            "Coordinate with local authorities"
+            "5 detailed resource allocation strategies",
+            "Specify supply chain management",
+            "Include personnel deployment",
+            "Detail equipment allocation",
+            "Emergency resource acquisition"
         ],
         "long_term_measures": [
-            "Develop infrastructure recovery plan",
-            "Implement community support programs",
-            "Establish long-term housing solutions"
+            "5 comprehensive recovery steps",
+            "Infrastructure restoration",
+            "Community rehabilitation",
+            "Economic recovery",
+            "Risk mitigation"
         ],
         "stakeholders": [
-            "Local Emergency Services",
-            "Medical Response Teams",
-            "Volunteer Organizations"
+            "5 key organizations/groups",
+            "Their specific roles",
+            "Coordination mechanisms",
+            "Response capabilities",
+            "Resource contributions"
         ],
         "recommendations": [
-            "Maintain emergency supply stockpiles",
-            "Regular disaster response drills",
-            "Update evacuation protocols"
+            "5 specific, actionable recommendations",
+            "Prevention measures",
+            "Preparation guidelines",
+            "Response improvements",
+            "Recovery strategies"
         ]
-    }
+    }}
 
-def generate_comprehensive_plan(data: Dict[str, str], agents: List[Agent]) -> Dict[str, Any]:
-    """Generate a comprehensive plan using all agents"""
-    
-    # Get base information from reasoning agent
-    reasoning_response = agents[0].run(
-        f"Analyze the {data['severity']} {data['disasterType']} disaster in {data['location']}. "
-        f"Consider population of {data['population']} and resources: {data['resources']}. "
-        "Provide detailed immediate actions, resource needs, and long-term strategies."
-    )
-
-    # Get research-backed information
-    research_response = agents[1].run(
-        f"Research recent {data['disasterType']} disasters and effective response strategies. "
-        f"Focus on {data['location']} region and similar scenarios. "
-        "Include specific protocols and best practices."
-    )
-
-    # Get resource allocation strategy
-    resource_response = agents[2].run(
-        f"Analyze resource requirements for {data['disasterType']} response. "
-        f"Available resources: {data['resources']}. Population: {data['population']}. "
-        "Provide detailed mobilization and distribution strategy."
-    )
-
-    # Get knowledge-based recommendations
-    knowledge_response = agents[3].run(
-        f"Provide comprehensive recommendations for {data['disasterType']} in {data['location']}. "
-        "Include stakeholder coordination, communication protocols, and long-term recovery strategies."
-    )
-
-    # Combine all insights into structured plan
-    combined_prompt = f"""
-    Create a detailed disaster response plan combining these insights:
-    
-    Reasoning Analysis: {reasoning_response}
-    Research Findings: {research_response}
-    Resource Strategy: {resource_response}
-    Expert Recommendations: {knowledge_response}
-    
-    Format as JSON with these sections:
-    - disaster_type: Detailed description of the disaster
-    - immediate_actions: At least 5 specific, actionable steps
-    - resource_mobilization: Detailed resource allocation strategy
-    - long_term_measures: Comprehensive recovery plan
-    - stakeholders: All relevant parties with their roles
-    - recommendations: Specific, actionable recommendations
+    Make all items specific and detailed. Return only the JSON object.
     """
-
-    # Generate final structured plan
-    final_plan = agents[4].run(combined_prompt)
-    return extract_json_from_response(final_plan)
 
 @app.route('/health', methods=['GET'])
 def health_check():
@@ -253,7 +157,7 @@ def health_check():
 
 @app.route('/generate-action-plan', methods=['POST'])
 def generate_action_plan():
-    """Generate disaster response action plan using multi-agent system"""
+    """Generate disaster response action plan"""
     try:
         if not request.is_json:
             return jsonify({
@@ -262,35 +166,35 @@ def generate_action_plan():
             }), 400
 
         data = request.json
-        logger.info(f"Received data: {data}")
+        logger.info(f"Received request data: {data}")
+
+        # Initialize agent
+        agent = initialize_agents()
+        
+        # Generate prompt
+        prompt = generate_action_plan_prompt(data)
+        logger.info("Generated prompt for action plan")
 
         try:
-            # Initialize all agents
-            reasoning_agent, research_agent, data_analyst_agent, rag_agent, action_plan_agent = initialize_agents()
-            agents = [reasoning_agent, research_agent, data_analyst_agent, rag_agent, action_plan_agent]
+            # Get response from agent
+            logger.info("Requesting plan from agent...")
+            response = agent.run(prompt)
+            logger.info("Received response from agent")
 
-            # Generate comprehensive plan
-            action_plan = generate_comprehensive_plan(data, agents)
+            # Extract JSON from response
+            action_plan = extract_json_from_response(response)
             
             if action_plan:
-                try:
-                    # Validate and enhance the plan
-                    validated_plan = DisasterActionPlan(**action_plan)
-                    return jsonify({
-                        'status': 'success',
-                        'action_plan': validated_plan.dict()
-                    })
-                except ValidationError as validation_error:
-                    logger.error(f"Validation error: {validation_error}")
-                    return jsonify({
-                        'status': 'error',
-                        'error': 'Invalid plan format'
-                    }), 500
+                logger.info("Successfully extracted action plan")
+                return jsonify({
+                    'status': 'success',
+                    'action_plan': action_plan
+                })
             else:
-                logger.error("Failed to generate plan")
+                logger.error("Failed to parse agent response")
                 return jsonify({
                     'status': 'error',
-                    'error': 'Failed to generate plan'
+                    'error': 'Failed to generate valid action plan'
                 }), 500
 
         except Exception as agent_error:
