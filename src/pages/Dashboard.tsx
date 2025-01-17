@@ -113,22 +113,25 @@ export const Dashboard = () => {
       title: "Generate Summary", 
       icon: FileText, 
       onClick: () => navigate('/generate-summary'),
-      color: "bg-gradient-to-r from-blue-500/80 to-blue-600/80 hover:from-blue-500/90 hover:to-blue-600/90",
-      borderColor: "border-blue-400/20"
+      color: "bg-gradient-to-r from-blue-500/40 to-blue-600/40 hover:from-blue-500/60 hover:to-blue-600/60",
+      borderColor: "border-blue-400/30",
+      shadow: "shadow-blue-500/20"
     },
     { 
       title: "Create Action Plan", 
       icon: AlertTriangle, 
       onClick: () => navigate('/action-plan'),
-      color: "bg-gradient-to-r from-purple-500/80 to-purple-600/80 hover:from-purple-500/90 hover:to-purple-600/90",
-      borderColor: "border-purple-400/20"
+      color: "bg-gradient-to-r from-purple-500/40 to-purple-600/40 hover:from-purple-500/60 hover:to-purple-600/60",
+      borderColor: "border-purple-400/30",
+      shadow: "shadow-purple-500/20"
     },
     { 
       title: "Send Alert", 
       icon: Send, 
       onClick: () => navigate('/communication'),
-      color: "bg-gradient-to-r from-rose-500/80 to-rose-600/80 hover:from-rose-500/90 hover:to-rose-600/90",
-      borderColor: "border-rose-400/20"
+      color: "bg-gradient-to-r from-rose-500/40 to-rose-600/40 hover:from-rose-500/60 hover:to-rose-600/60",
+      borderColor: "border-rose-400/30",
+      shadow: "shadow-rose-500/20"
     }
   ];
 
@@ -155,11 +158,12 @@ export const Dashboard = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.1 }}
                     onClick={action.onClick}
-                    className={`${action.color} text-white px-6 py-3 rounded-xl 
+                    className={`${action.color} text-white/90 px-6 py-3 rounded-xl 
                       flex items-center gap-2 transition-all duration-300 
-                      hover:scale-105 active:scale-95 shadow-lg shadow-black/10
-                      backdrop-blur-lg border ${action.borderColor}
-                      hover:shadow-xl hover:shadow-black/20`}
+                      hover:scale-105 active:scale-95 
+                      backdrop-blur-md border ${action.borderColor}
+                      shadow-lg ${action.shadow} hover:shadow-xl
+                      hover:text-white`}
                   >
                     <action.icon className="w-5 h-5" />
                     <span className="font-medium">{action.title}</span>

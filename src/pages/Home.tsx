@@ -13,22 +13,25 @@ export const Home = () => {
       title: "Generate Summary", 
       icon: FileText, 
       path: '/generate-summary',
-      color: "bg-gradient-to-r from-blue-500/80 to-blue-600/80 hover:from-blue-500/90 hover:to-blue-600/90",
-      borderColor: "border-blue-400/20"
+      color: "bg-gradient-to-r from-blue-500/40 to-blue-600/40 hover:from-blue-500/60 hover:to-blue-600/60",
+      borderColor: "border-blue-400/30",
+      shadow: "shadow-blue-500/20"
     },
     { 
       title: "Create Action Plan", 
       icon: AlertTriangle, 
       path: '/action-plan',
-      color: "bg-gradient-to-r from-purple-500/80 to-purple-600/80 hover:from-purple-500/90 hover:to-purple-600/90",
-      borderColor: "border-purple-400/20"
+      color: "bg-gradient-to-r from-purple-500/40 to-purple-600/40 hover:from-purple-500/60 hover:to-purple-600/60",
+      borderColor: "border-purple-400/30",
+      shadow: "shadow-purple-500/20"
     },
     { 
       title: "Send Alert", 
       icon: Send, 
       path: '/communication',
-      color: "bg-gradient-to-r from-rose-500/80 to-rose-600/80 hover:from-rose-500/90 hover:to-rose-600/90",
-      borderColor: "border-rose-400/20"
+      color: "bg-gradient-to-r from-rose-500/40 to-rose-600/40 hover:from-rose-500/60 hover:to-rose-600/60",
+      borderColor: "border-rose-400/30",
+      shadow: "shadow-rose-500/20"
     }
   ];
 
@@ -127,11 +130,12 @@ export const Home = () => {
                 >
                   <Link
                     to={action.path}
-                    className={`${action.color} text-white px-8 py-4 rounded-xl 
+                    className={`${action.color} text-white/90 px-8 py-4 rounded-xl 
                       flex items-center gap-3 transition-all duration-300
-                      hover:scale-105 active:scale-95 shadow-lg shadow-black/10
-                      backdrop-blur-lg border ${action.borderColor}
-                      hover:shadow-xl hover:shadow-black/20`}
+                      hover:scale-105 active:scale-95 
+                      backdrop-blur-md border ${action.borderColor}
+                      shadow-lg ${action.shadow} hover:shadow-xl
+                      hover:text-white`}
                   >
                     <action.icon className="w-5 h-5" />
                     <span className="font-medium">{action.title}</span>
@@ -171,7 +175,7 @@ export const Home = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl font-bold mb-4 font-heading bg-clip-text text-transparent bg-gradient-to-r from-primary-light to-secondary-light">
+            <h2 className="text-4xl font-bold mb-4 font-heading text-white drop-shadow-lg">
               Powerful Features
             </h2>
             <p className="text-neutral-light max-w-2xl mx-auto">
@@ -219,7 +223,7 @@ export const Home = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl font-bold mb-4 font-heading bg-clip-text text-transparent bg-gradient-to-r from-primary-light to-secondary-light">
+            <h2 className="text-4xl font-bold mb-4 font-heading text-white drop-shadow-lg">
             Who We Serve
             </h2>
             <p className="text-neutral-light max-w-2xl mx-auto">
