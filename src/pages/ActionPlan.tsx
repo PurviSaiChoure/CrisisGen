@@ -273,7 +273,7 @@ export const ActionPlan = () => {
                     />
                     <Users className="w-5 h-5 text-neutral-light absolute left-3 top-3.5" />
                   </div>
-                </div>
+            </div>
 
                 <button
                   type="submit"
@@ -287,7 +287,7 @@ export const ActionPlan = () => {
                     <div className="flex items-center space-x-3">
                       <div className="animate-spin h-5 w-5 border-2 border-white/30 border-t-white rounded-full" />
                       <span>Generating Plan...</span>
-                    </div>
+            </div>
                   ) : (
                     <>
                       <Shield className="w-5 h-5" />
@@ -295,14 +295,14 @@ export const ActionPlan = () => {
                     </>
                   )}
                 </button>
-              </form>
-            </motion.div>
+          </form>
+        </motion.div>
 
             {/* Action Plan Display */}
-            <motion.div
+        <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
+          transition={{ delay: 0.2 }}
               className="bg-white/5 backdrop-blur-lg rounded-2xl border border-white/10 flex flex-col"
             >
               {/* Plan Header */}
@@ -336,9 +336,9 @@ export const ActionPlan = () => {
                   <div className="text-center text-neutral-light">
                     <Shield className="w-12 h-12 mx-auto mb-4 opacity-50" />
                     <p>Generate an action plan to see the response strategy</p>
-                  </div>
+            </div>
                 )}
-              </div>
+            </div>
             </motion.div>
           </div>
         </motion.div>

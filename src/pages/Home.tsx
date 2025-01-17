@@ -1,9 +1,37 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Users, FileText, MessageSquare, ArrowRight, Shield, Globe, Activity, AlertTriangle, Zap, BarChart3 } from 'lucide-react';
+import { 
+  MapPin, Users, FileText, MessageSquare, ArrowRight, Shield, 
+  Globe, Activity, AlertTriangle, Zap, BarChart3, Heart, 
+  Clock, Brain, Target, Send 
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const Home = () => {
+  const mainActions = [
+    { 
+      title: "Generate Summary", 
+      icon: FileText, 
+      path: '/generate-summary',
+      color: "bg-gradient-to-r from-blue-500/80 to-blue-600/80 hover:from-blue-500/90 hover:to-blue-600/90",
+      borderColor: "border-blue-400/20"
+    },
+    { 
+      title: "Create Action Plan", 
+      icon: AlertTriangle, 
+      path: '/action-plan',
+      color: "bg-gradient-to-r from-purple-500/80 to-purple-600/80 hover:from-purple-500/90 hover:to-purple-600/90",
+      borderColor: "border-purple-400/20"
+    },
+    { 
+      title: "Send Alert", 
+      icon: Send, 
+      path: '/communication',
+      color: "bg-gradient-to-r from-rose-500/80 to-rose-600/80 hover:from-rose-500/90 hover:to-rose-600/90",
+      borderColor: "border-rose-400/20"
+    }
+  ];
+
   const features = [
     {
       icon: MapPin,
@@ -12,10 +40,10 @@ export const Home = () => {
       color: "from-blue-500/20 to-blue-600/20"
     },
     {
-      icon: Shield,
-      title: "Rapid Response",
-      description: "Generate instant action plans and coordinate emergency efforts",
-      color: "from-red-500/20 to-red-600/20"
+      icon: Brain,
+      title: "AI-Powered Analysis",
+      description: "Leverage cutting-edge artificial intelligence for rapid response coordination",
+      color: "from-purple-500/20 to-purple-600/20"
     },
     {
       icon: Activity,
@@ -27,65 +55,57 @@ export const Home = () => {
       icon: MessageSquare,
       title: "Smart Communications",
       description: "Automated alerts and communication templates for quick deployment",
-      color: "from-purple-500/20 to-purple-600/20"
-    }
-  ];
-
-  const segments = [
-    {
-      icon: Users,
-      title: "For Citizens",
-      description: "Stay informed and prepared with real-time alerts and guidance",
-      link: "/dashboard",
-      color: "from-primary/20 via-primary/10 to-transparent"
-    },
-    {
-      icon: Globe,
-      title: "For NGOs",
-      description: "Coordinate relief efforts and resource allocation efficiently",
-      link: "/dashboard",
-      color: "from-secondary/20 via-secondary/10 to-transparent"
-    },
-    {
-      icon: Shield,
-      title: "For Governments",
-      description: "Comprehensive disaster management and response coordination",
-      link: "/dashboard",
-      color: "from-success/20 via-success/10 to-transparent"
+      color: "from-orange-500/20 to-orange-600/20"
     }
   ];
 
   const stats = [
     { value: "24/7", label: "Monitoring", icon: AlertTriangle },
     { value: "45s", label: "Response Time", icon: Zap },
-    { value: "98%", label: "Accuracy", icon: BarChart3 }
+    { value: "98%", label: "Accuracy", icon: BarChart3 },
+    { value: "1M+", label: "Lives Protected", icon: Heart }
+  ];
+
+  const segments = [
+    {
+      icon: Users,
+      title: "For Emergency Teams",
+      description: "Coordinate response efforts with real-time data and AI assistance",
+      link: "/dashboard",
+      color: "from-primary/20 via-primary/10 to-transparent"
+    },
+    {
+      icon: Globe,
+      title: "For Organizations",
+      description: "Manage resources and coordinate multi-agency responses efficiently",
+      link: "/dashboard",
+      color: "from-secondary/20 via-secondary/10 to-transparent"
+    },
+    {
+      icon: Shield,
+      title: "For Communities",
+      description: "Stay informed and prepared with real-time alerts and guidance",
+      link: "/dashboard",
+      color: "from-success/20 via-success/10 to-transparent"
+    }
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800">
-      {/* Hero Section */}
-      <motion.section 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="relative min-h-screen flex items-center justify-center overflow-hidden"
-      >
-        {/* Background Effects */}
+      {/* Hero Section with Action Buttons */}
+      <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-secondary/20 mix-blend-multiply" />
           <div className="absolute inset-0 bg-[url('/disaster-bg.jpg')] bg-cover bg-center opacity-20" />
-          {/* Animated gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-gray-900/50 to-gray-900" />
         </div>
 
-        {/* Content */}
-        <div className="relative z-10 max-w-7xl mx-auto px-6 py-32">
+        <div className="relative z-10 max-w-7xl mx-auto px-6 py-20">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
             className="text-center space-y-8"
           >
-            {/* Hero Title with Gradient */}
             <h1 className="text-6xl md:text-7xl font-bold mb-6 font-heading bg-clip-text text-transparent bg-gradient-to-r from-white via-primary-light to-secondary-light">
               AI-Powered
               <br />
@@ -96,14 +116,38 @@ export const Home = () => {
               Empowering communities with real-time disaster management and intelligent response coordination
             </p>
 
+            {/* Action Buttons */}
+            <div className="flex flex-wrap justify-center gap-4 mt-8">
+              {mainActions.map((action, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.1 }}
+                >
+                  <Link
+                    to={action.path}
+                    className={`${action.color} text-white px-8 py-4 rounded-xl 
+                      flex items-center gap-3 transition-all duration-300
+                      hover:scale-105 active:scale-95 shadow-lg shadow-black/10
+                      backdrop-blur-lg border ${action.borderColor}
+                      hover:shadow-xl hover:shadow-black/20`}
+                  >
+                    <action.icon className="w-5 h-5" />
+                    <span className="font-medium">{action.title}</span>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+
             {/* Stats Section */}
-            <div className="flex flex-wrap justify-center gap-8 my-12">
+            <div className="flex flex-wrap justify-center gap-8 mt-16">
               {stats.map((stat, idx) => (
                 <motion.div
                   key={idx}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 + idx * 0.1 }}
+                  transition={{ delay: 0.5 + idx * 0.1 }}
                   className="text-center"
                 >
                   <div className="flex items-center justify-center mb-2">
@@ -114,47 +158,11 @@ export const Home = () => {
                 </motion.div>
               ))}
             </div>
-
-            <div className="flex flex-wrap justify-center gap-4 mt-8">
-              <Link 
-                to="/dashboard" 
-                className="px-8 py-4 bg-gradient-to-r from-primary to-primary-dark text-white rounded-xl 
-                transition-all duration-300 flex items-center space-x-2 shadow-lg hover:shadow-primary/25
-                transform hover:-translate-y-1"
-              >
-                <span>Get Started</span>
-                <ArrowRight className="w-5 h-5" />
-              </Link>
-              <Link 
-                to="/about" 
-                className="px-8 py-4 bg-white/10 hover:bg-white/20 text-white rounded-xl 
-                transition-all duration-300 flex items-center border border-white/20 hover:border-white/40
-                backdrop-blur-lg transform hover:-translate-y-1"
-              >
-                <span>Learn More</span>
-              </Link>
-            </div>
           </motion.div>
         </div>
+      </section>
 
-        {/* Animated Globe */}
-        <motion.div
-          animate={{
-            y: [0, -20, 0],
-            rotate: [0, 360]
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-          className="absolute bottom-10 left-1/2 transform -translate-x-1/2"
-        >
-          <Globe className="w-16 h-16 text-primary-light opacity-50" />
-        </motion.div>
-      </motion.section>
-
-      {/* Features Section with Gradient Cards */}
+      {/* Features Section */}
       <section className="py-20 relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-6">
           <motion.div
@@ -164,10 +172,10 @@ export const Home = () => {
             className="text-center mb-16"
           >
             <h2 className="text-4xl font-bold mb-4 font-heading bg-clip-text text-transparent bg-gradient-to-r from-primary-light to-secondary-light">
-              Intelligent Response System
+              Powerful Features
             </h2>
             <p className="text-neutral-light max-w-2xl mx-auto">
-              Cutting-edge features powered by artificial intelligence to streamline disaster response
+              Advanced tools and technologies for effective disaster response
             </p>
           </motion.div>
 
@@ -182,13 +190,11 @@ export const Home = () => {
                 className="group relative bg-white/5 backdrop-blur-lg rounded-2xl p-6 border border-white/10 
                 hover:bg-white/10 transition-all duration-500 overflow-hidden"
               >
-                {/* Gradient Background */}
                 <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 
                 group-hover:opacity-100 transition-opacity duration-500`} />
                 
                 <div className="relative z-10">
-                  <div className="p-3 bg-white/10 rounded-xl w-fit mb-4 group-hover:bg-white/20 
-                  transition-colors duration-300">
+                  <div className="p-3 bg-white/10 rounded-xl w-fit mb-4">
                     <feature.icon className="w-6 h-6 text-primary-light" />
                   </div>
                   <h3 className="text-xl font-heading font-bold text-primary-light mb-2">
@@ -204,7 +210,7 @@ export const Home = () => {
         </div>
       </section>
 
-      {/* User Segments with Interactive Cards */}
+      {/* Segments Section */}
       <section className="py-20 relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-6">
           <motion.div
@@ -214,10 +220,10 @@ export const Home = () => {
             className="text-center mb-16"
           >
             <h2 className="text-4xl font-bold mb-4 font-heading bg-clip-text text-transparent bg-gradient-to-r from-primary-light to-secondary-light">
-              Tailored Solutions
+            Who We Serve
             </h2>
             <p className="text-neutral-light max-w-2xl mx-auto">
-              Specialized features designed for different stakeholders in disaster response
+              Tailored solutions for different stakeholders in disaster response
             </p>
           </motion.div>
 
@@ -232,7 +238,6 @@ export const Home = () => {
                 className="group relative bg-white/5 backdrop-blur-lg rounded-2xl p-8 border border-white/10 
                 hover:bg-white/10 transition-all duration-500"
               >
-                {/* Gradient Background */}
                 <div className={`absolute inset-0 bg-gradient-to-br ${segment.color} opacity-0 
                 group-hover:opacity-100 transition-opacity duration-500`} />
                 
@@ -258,7 +263,7 @@ export const Home = () => {
         </div>
       </section>
 
-      {/* Enhanced CTA Section */}
+      {/* CTA Section */}
       <section className="py-20 relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-6">
           <motion.div
@@ -268,7 +273,6 @@ export const Home = () => {
             className="relative bg-gradient-to-r from-primary/20 to-secondary/20 backdrop-blur-lg rounded-2xl p-12 
             border border-white/10 text-center overflow-hidden"
           >
-            {/* Animated background effect */}
             <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-transparent to-secondary/20 
             animate-pulse" style={{ animationDuration: '3s' }} />
             
@@ -281,9 +285,9 @@ export const Home = () => {
               </p>
               <Link
                 to="/dashboard"
-                className="px-8 py-4 bg-white/10 hover:bg-white/20 text-white rounded-xl 
-                transition-all duration-300 flex items-center space-x-2 mx-auto w-fit
-                backdrop-blur-lg border border-white/20 hover:border-white/40 transform hover:-translate-y-1"
+                className="inline-flex items-center px-8 py-4 bg-white/10 hover:bg-white/20 text-white rounded-xl 
+                transition-all duration-300 space-x-2 backdrop-blur-lg border border-white/20 hover:border-white/40 
+                transform hover:-translate-y-1"
               >
                 <span>Launch Dashboard</span>
                 <ArrowRight className="w-5 h-5 ml-2" />

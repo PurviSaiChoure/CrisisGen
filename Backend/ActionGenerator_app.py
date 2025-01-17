@@ -37,11 +37,11 @@ def initialize_agents():
     
     # Single comprehensive agent
     action_plan_agent = Agent(
-        name="Action Plan Generator",
+    name="Action Plan Generator",
         model=Together(id="meta-llama/Llama-3.3-70B-Instruct-Turbo-Free"),
         description="Generate comprehensive disaster response plans",
         structured_outputs=False,
-        instructions=[
+    instructions=[
             "You are a disaster response planning expert.",
             "Generate detailed and actionable plans based on the provided scenario.",
             "Include specific steps, resource allocation, and recommendations.",
