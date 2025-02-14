@@ -26,7 +26,7 @@ def fetch_disaster_data():
                 "country",
                 "primary_country",
                 "description",
-                "name"
+                "name", 
             ],
             "sort[]": ["date:desc"]
         }

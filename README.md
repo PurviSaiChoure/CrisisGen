@@ -8,7 +8,14 @@ To design an AI system that helps stakeholders (citizens, NGOs, and governments)
 
 - Generating real-time disaster summaries.
 - Suggesting actionable plans based on the severity and nature of the disaster.
-- Creating custom communication templates for affected populations or response teams.
+- Facilitating communication among stakeholders.
+
+## Features
+
+- **Real-time Disaster Summaries**: Automatically generates summaries of ongoing disasters using AI.
+- **Action Plan Generation**: Provides actionable plans tailored to specific disaster scenarios.
+- **Communication Tools**: Enables stakeholders to communicate effectively during crises.
+- **Insights and Analytics**: Offers insights into disaster trends and statistics.
 
 ## Table of Contents
 
@@ -21,67 +28,18 @@ To design an AI system that helps stakeholders (citizens, NGOs, and governments)
 - [License](#license)
 - [Contact](#contact)
 
-## Features
-
-### Pages in the Website
-
-1. **Home Page** (`/src/pages/Home.tsx`):
-   - Introduces the platform, its features, and how it works.
-   - Key Features:
-     - Hero Section with a striking headline and dynamic map.
-     - Overview of features like real-time disaster summaries and action plan generator.
-     - User segmentation options for tailored content.
-
-2. **Dashboard Page** (`/src/pages/Dashboard.tsx`):
-   - Displays real-time disaster information and tools for generating summaries, plans, and templates.
-   - Key Features:
-     - Interactive map with disaster markers.
-     - Live disaster feed with filtering options.
-     - Action buttons for generating summaries and creating action plans.
-
-3. **Action Plan Generator Page** (`/src/pages/ActionPlan.tsx`):
-   - Allows users to create and customize detailed action plans.
-   - Key Features:
-     - Input form for disaster type, affected regions, and available resources.
-     - Display of AI-generated action plans.
-
-4. **Communication Template Page** (`/src/pages/Communication.tsx`):
-   - Generates and customizes alerts, updates, or resource requests.
-   - Key Features:
-     - Template options for alerts and resource appeals.
-     - Customization panel for editable fields.
-
-5. **Insights and Analytics Page** (`/src/pages/Insights.tsx`):
-   - Provides visual and statistical insights for policymakers or NGOs.
-   - Key Features:
-     - Graphs and charts for affected population trends.
-     - Predictive analytics for disaster-prone areas.
-
-6. **About Us Page** (`/src/pages/About.tsx`):
-   - Explains the mission and vision behind CrisisGen.
-   - Key Features:
-     - Introduction to the team and collaboration opportunities.
-
-7. **Contact Us Page** (`/src/pages/Contact.tsx`):
-   - Allows users to get in touch for queries, feedback, or partnerships.
-   - Key Features:
-     - Contact form and direct contact information.
-
 ## Technologies Used
 
-- **Frontend**: React, Tailwind CSS, Framer Motion
-- **Backend**: Flask, Python, Llama (GenAi)
-- **Database**: SQLite 
-- **Deployment**: Vercel (for frontend), Heroku (for backend) 
+- **Frontend**: Built with React, utilizing libraries such as React Router for navigation and Framer Motion for animations.
+- **Backend**: Developed using Flask, with integrations for AI models and data processing.
+- **Database**: Utilizes DuckDB for data storage and querying.
 
 ## Installation
 
-To set up the project locally, follow these steps:
-
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/yourusername/GenCrisis.git
-   cd GenCrisis
+   git clone https://github.com/yourusername/CrisisGen.git
+   cd CrisisGen
    ```
 
 2. **Set up the backend**:
@@ -89,22 +47,16 @@ To set up the project locally, follow these steps:
      ```bash
      cd Backend
      ```
-   - Create a virtual environment:
-     ```bash
-     python -m venv venv
-     ```
-   - Activate the virtual environment:
-     - On Windows:
-       ```bash
-       venv\Scripts\activate
-       ```
-     - On macOS/Linux:
-       ```bash
-       source venv/bin/activate
-       ```
    - Install the required packages:
      ```bash
      pip install -r requirements.txt
+     ```
+   - Create a `.env` file in the `Backend` directory and add your API keys:
+     ```plaintext
+     PHI_API_KEY="your_phi_api_key"
+     GROQ_API_KEY="your_groq_api_key"
+     API_SECRET_KEY="your_api_secret_key"
+     TOGETHER_API_KEY="your_together_api_key"
      ```
 
 3. **Set up the frontend**:
@@ -118,20 +70,22 @@ To set up the project locally, follow these steps:
      ```
 
 4. **Run the backend**:
-   ```bash
-   python app.py
-   ```
+   - Start the Flask server:
+     ```bash
+     python ActionGenerator_app.py
+     ```
 
 5. **Run the frontend**:
-   ```bash
-   npm run dev
-   ```
+   - Start the React application:
+     ```bash
+     npm start
+     ```
 
 ## Usage
 
-1. Open your browser and navigate to `http://localhost:3000` for the frontend.
-2. Use the application to generate disaster summaries by selecting the appropriate filters.
-3. View the generated summaries and insights in real-time.
+- Access the application in your browser at `http://localhost:3000`.
+- Use the dashboard to view ongoing disasters and generate summaries.
+- Utilize the communication tools to send messages to stakeholders.
 
 ## API Endpoints
 
@@ -184,4 +138,4 @@ For any inquiries, please contact:
 
 ---
 
-Thank you for using GenCrisis! We hope it helps you in disaster management and response.
+Thank you for using CrisisGen! We hope it helps you in disaster management and response.
