@@ -20,11 +20,34 @@ interface RegionalData {
   disasters: number;
 }
 
+interface StatusDistribution {
+  status: string;
+  count: number;
+}
+
+interface TimelineEvent {
+  name: string;
+  date: string;
+  type: string;
+  country: string;
+}
+
+interface DisasterDetail {
+  name: string;
+  type: string;
+  country: string;
+  status: string;
+  description: string;
+}
+
 interface InsightsData {
   disaster_data: {
     monthly_trends: DisasterTrend[];
     type_distribution: DisasterType[];
     regional_data: RegionalData[];
+    status_distribution: StatusDistribution[];
+    severity_timeline: TimelineEvent[];
+    disaster_details: DisasterDetail[];
   };
   quick_stats: {
     active_disasters: { value: number; change: number; trend: string };
@@ -230,7 +253,87 @@ export const Insights = () => {
               </div>
             </motion.div>
 
-            
+            {/* Status Distribution */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white/5 backdrop-blur-lg rounded-2xl p-6 border border-white/10"
+            >
+              <h2 className="text-2xl font-heading font-bold text-primary-light mb-6">Status Distribution</h2>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={data.disaster_data.status_distribution}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="count"
+                      nameKey="status"
+                      label={({ status, value }) => `${status}: ${value}`}
+                    >
+                      {data.disaster_data.status_distribution.map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </motion.div>
+
+            {/* Recent Disasters Timeline */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white/5 backdrop-blur-lg rounded-2xl p-6 border border-white/10"
+            >
+              <h2 className="text-2xl font-heading font-bold text-primary-light mb-6">Recent Disasters Timeline</h2>
+              <div className="space-y-4">
+                {data.disaster_data.severity_timeline.map((event, idx) => (
+                  <div key={idx} className="bg-white/5 rounded-xl p-4 flex items-center space-x-4">
+                    <div className="flex-shrink-0">
+                      <div className="w-3 h-3 rounded-full bg-primary"></div>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-primary-light">{event.name}</h3>
+                      <p className="text-sm text-neutral-light">
+                        {new Date(event.date).toLocaleDateString()} - {event.type} in {event.country}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Latest Disaster Details */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white/5 backdrop-blur-lg rounded-2xl p-6 border border-white/10"
+            >
+              <h2 className="text-2xl font-heading font-bold text-primary-light mb-6">Latest Disasters</h2>
+              <div className="space-y-4">
+                {data.disaster_data.disaster_details.map((disaster, idx) => (
+                  <div key={idx} className="bg-white/5 rounded-xl p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="text-lg font-semibold text-primary-light">{disaster.name}</h3>
+                      <span className="px-2 py-1 text-xs rounded-full bg-primary/20 text-primary-light">
+                        {disaster.status}
+                      </span>
+                    </div>
+                    <p className="text-sm text-neutral-light mb-2">
+                      {disaster.type} in {disaster.country}
+                    </p>
+                    <p className="text-sm text-neutral-light line-clamp-2">
+                      {disaster.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
 
             <div>
               <h1>

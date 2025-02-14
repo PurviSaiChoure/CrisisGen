@@ -52,7 +52,10 @@ def fetch_disaster_data():
         processed_data = {
             'monthly_trends': process_monthly_trends(disasters),
             'type_distribution': process_type_distribution(disasters),
-            'regional_data': process_regional_data(disasters)
+            'regional_data': process_regional_data(disasters),
+            'status_distribution': process_status_distribution(disasters),
+            'severity_timeline': process_severity_timeline(disasters),
+            'disaster_details': process_disaster_details(disasters)
         }
 
         quick_stats = {
@@ -101,6 +104,36 @@ def process_regional_data(disasters):
         country = disaster['fields'].get('country', [{}])[0].get('name', 'Unknown')
         region_counts[country] = region_counts.get(country, 0) + 1
     return [{'region': k, 'disasters': v} for k, v in region_counts.items()]
+
+def process_status_distribution(disasters):
+    """Process disasters by status"""
+    status_counts = {}
+    for disaster in disasters:
+        status = disaster['fields'].get('status', 'Unknown')
+        status_counts[status] = status_counts.get(status, 0) + 1
+    return [{'status': k, 'count': v} for k, v in status_counts.items()]
+
+def process_severity_timeline(disasters):
+    """Process severity over time"""
+    timeline = []
+    for disaster in disasters[:20]:  # Last 20 disasters
+        timeline.append({
+            'name': disaster['fields'].get('name', 'Unknown'),
+            'date': disaster['fields'].get('date', {}).get('created', ''),
+            'type': disaster['fields'].get('type', [{}])[0].get('name', 'Unknown'),
+            'country': disaster['fields'].get('country', [{}])[0].get('name', 'Unknown')
+        })
+    return timeline
+
+def process_disaster_details(disasters):
+    """Process detailed disaster information"""
+    return [{
+        'name': d['fields'].get('name', 'Unknown'),
+        'type': d['fields'].get('type', [{}])[0].get('name', 'Unknown'),
+        'country': d['fields'].get('country', [{}])[0].get('name', 'Unknown'),
+        'status': d['fields'].get('status', 'Unknown'),
+        'description': d['fields'].get('description', '')
+    } for d in disasters[:5]]  # Latest 5 disasters
 
 def calculate_active_disasters(disasters):
     """Calculate active disasters"""
