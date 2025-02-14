@@ -6,33 +6,34 @@ CrisisGen is a web application designed to provide real-time disaster management
 
 To design an AI system that helps stakeholders (citizens, NGOs, and governments) during disasters by:
 
-- Generating real-time disaster summaries.
-- Suggesting actionable plans based on the severity and nature of the disaster.
-- Facilitating communication among stakeholders.
+- Generating real-time disaster summaries using **Generative AI (GenAI)** technologies.
+- Suggesting actionable plans based on the severity and nature of the disaster through **Agentic AI** capabilities.
+- Facilitating communication among stakeholders to ensure timely and effective responses.
 
 ## Features
 
-- **Real-time Disaster Summaries**: Automatically generates summaries of ongoing disasters using AI.
-- **Action Plan Generation**: Provides actionable plans tailored to specific disaster scenarios.
-- **Communication Tools**: Enables stakeholders to communicate effectively during crises.
-- **Insights and Analytics**: Offers insights into disaster trends and statistics.
-
-## Table of Contents
-
-- [Features](#features)
-- [Technologies Used](#technologies-used)
-- [Installation](#installation)
-- [Usage](#usage)
-- [API Endpoints](#api-endpoints)
-- [Contributing](#contributing)
-- [License](#license)
-- [Contact](#contact)
+- **Real-time Disaster Summaries**: Automatically generates summaries of ongoing disasters using AI, providing stakeholders with up-to-date information.
+- **Action Plan Generation**: Utilizes AI to create actionable plans tailored to specific disaster scenarios, ensuring that responses are efficient and effective.
+- **Communication Tools**: Enables stakeholders to communicate effectively during crises, allowing for coordinated efforts and resource sharing.
+- **Insights and Analytics**: Offers insights into disaster trends and statistics, helping stakeholders make informed decisions based on data.
 
 ## Technologies Used
 
-- **Frontend**: Built with React, utilizing libraries such as React Router for navigation and Framer Motion for animations.
-- **Backend**: Developed using Flask, with integrations for AI models and data processing.
-- **Database**: Utilizes DuckDB for data storage and querying.
+- **Frontend**: 
+  - **React**: A JavaScript library for building user interfaces, allowing for a dynamic and responsive user experience.
+  - **React Router**: For navigation between different components and pages within the application.
+  - **Framer Motion**: A library for animations, enhancing the user experience with smooth transitions and effects.
+ 
+- **Backend**: 
+  - **Flask**: A lightweight WSGI web application framework in Python, used to build the backend services and APIs.
+  - **Generative AI (GenAI)**: Utilized for generating disaster summaries and actionable plans based on real-time data inputs.
+  - **Agentic AI**: Employed to facilitate intelligent decision-making processes and automate responses based on the severity of disasters.
+
+- **Database**: 
+  - **DuckDB**: An in-process SQL OLAP database management system, used for efficient data storage and querying of disaster-related information.
+
+- **APIs**: 
+  - Integration with various external APIs for real-time data fetching, including disaster data, news updates, and AI model interactions.
 
 ## Installation
 
@@ -86,6 +87,7 @@ To design an AI system that helps stakeholders (citizens, NGOs, and governments)
 - Access the application in your browser at `http://localhost:3000`.
 - Use the dashboard to view ongoing disasters and generate summaries.
 - Utilize the communication tools to send messages to stakeholders.
+- Explore the Insights page to analyze disaster trends and statistics.
 
 ## API Endpoints
 
