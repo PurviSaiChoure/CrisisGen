@@ -62,7 +62,8 @@ export const Insights = () => {
   const [data, setData] = useState<InsightsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [refreshInterval, setRefreshInterval] = useState<number>(30000); // 30 seconds
+  const [refreshInterval, setRefreshInterval] = useState<number>(3600000); // 1 hour
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
   const fetchInsightsData = async () => {
     try {
@@ -74,10 +75,11 @@ export const Insights = () => {
       }
       
       const result = await response.json();
-      console.log('API Response:', result); // Debug log
+      console.log('API Response:', result);
       
       if (result.status === 'success' && result.data) {
         setData(result.data);
+        setLastUpdated(new Date());
       } else {
         throw new Error(result.message || 'Failed to fetch insights data');
       }
@@ -147,10 +149,20 @@ export const Insights = () => {
           >
             {/* Header */}
             <div className="bg-white/5 backdrop-blur-lg rounded-2xl p-6 border border-white/10">
-              <h1 className="text-3xl font-heading font-bold text-primary-light">
-                <Users className="inline-block" /> User Insights
-              </h1>
-              <p className="text-neutral-light mt-2">Comprehensive analysis of disaster response data</p>
+              <div className="flex justify-between items-center">
+                <div>
+                  <h1 className="text-3xl font-heading font-bold text-primary-light">
+                    <Users className="inline-block" /> User Insights
+                  </h1>
+                  <p className="text-neutral-light mt-2">Comprehensive analysis of disaster response data</p>
+                </div>
+                <div className="text-right text-sm text-neutral-light">
+                  <p>Last Updated:</p>
+                  <p className="font-medium text-primary-light">
+                    {lastUpdated.toLocaleString()}
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Quick Stats Grid */}

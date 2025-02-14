@@ -3,6 +3,8 @@ from flask_cors import CORS
 import requests
 from datetime import datetime, timedelta, timezone
 import logging
+from functools import lru_cache
+from time import time
 
 app = Flask(__name__)
 CORS(app)
@@ -223,10 +225,15 @@ def calculate_avg_response_time(disasters):
         'trend': trend
     }
 
+# Cache the disaster data for 1 hour
+@lru_cache(maxsize=1)
+def get_cached_data():
+    return fetch_disaster_data(), int(time() / 3600)  # Cache key changes every hour
+
 @app.route('/api/insights', methods=['GET'])
 def get_insights():
     try:
-        data = fetch_disaster_data()
+        data, _ = get_cached_data()  # The _ is the cache key (current hour)
         return jsonify({
             'status': 'success',
             'data': data
