@@ -11,7 +11,7 @@ CORS(app)
 
 # ReliefWeb API Configuration
 RELIEFWEB_API_URL = "https://api.reliefweb.int/v1/disasters"
-APP_NAME = "disaster-response-app"
+APP_NAME = "InsightsGenerator_app"
 
 def fetch_disaster_data():
     """Fetch disaster data from ReliefWeb API"""
@@ -134,8 +134,15 @@ def process_disaster_details(disasters):
         'type': d['fields'].get('type', [{}])[0].get('name', 'Unknown'),
         'country': d['fields'].get('country', [{}])[0].get('name', 'Unknown'),
         'status': d['fields'].get('status', 'Unknown'),
-        'description': d['fields'].get('description', '')
-    } for d in disasters[:5]]  # Latest 5 disasters
+        'description': d['fields'].get('description', ''),
+        'date': d['fields'].get('date', {}).get('created', ''),
+        'url': d['fields'].get('url', ''),
+        'sources': d['fields'].get('sources', []),
+        'primary_country': d['fields'].get('primary_country', {}).get('name', ''),
+        'glide': d['fields'].get('glide', 'N/A'),
+        'vulnerable_groups': d['fields'].get('vulnerable_groups', []),
+        'severity': d['fields'].get('severity', 'Unknown')
+    } for d in disasters[:10]]  # Increased to 10 latest disasters
 
 def calculate_active_disasters(disasters):
     """Calculate active disasters"""
