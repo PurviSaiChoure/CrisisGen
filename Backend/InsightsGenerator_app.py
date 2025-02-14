@@ -17,7 +17,16 @@ def fetch_disaster_data():
         params = {
             "appname": APP_NAME,
             "limit": 100,
-            "profile": "full"  # Fetch full disaster profiles
+            "fields[include][]": [
+                "date",
+                "status",
+                "type",
+                "country",
+                "primary_country",
+                "description",
+                "name"
+            ],
+            "sort[]": ["date:desc"]
         }
 
         headers = {
@@ -35,6 +44,7 @@ def fetch_disaster_data():
             response.raise_for_status()
 
         data = response.json()
+        print("API Response Data:", data)  # Debug log
         disasters = data.get('data', [])
 
         
@@ -47,8 +57,8 @@ def fetch_disaster_data():
 
         quick_stats = {
             'active_disasters': calculate_active_disasters(disasters),
-            'people_affected': calculate_people_affected(disasters),
-            'avg_response_time': calculate_avg_response_time(disasters)
+            'people_affected': {'value': len(disasters), 'change': 0, 'trend': 'stable'},
+            'avg_response_time': {'value': 0, 'change': 0, 'trend': 'stable'}
         }
 
         return {
@@ -64,7 +74,6 @@ def process_monthly_trends(disasters):
     """Process disasters into monthly trends"""
     trends = []
     for i in range(12):
-        # Use timezone-aware datetime consistently
         month = datetime.now(timezone.utc) - timedelta(days=30*i)
         month_str = month.strftime("%Y-%m")
         month_disasters = [
@@ -81,22 +90,16 @@ def process_type_distribution(disasters):
     """Process disasters by type"""
     type_counts = {}
     for disaster in disasters:
-        disaster_types = disaster['fields'].get('type', [])
-        for dtype in disaster_types:
-            disaster_type = dtype.get('name', 'Unknown')
-            type_counts[disaster_type] = type_counts.get(disaster_type, 0) + 1
-
+        disaster_type = disaster['fields'].get('type', [{}])[0].get('name', 'Unknown')
+        type_counts[disaster_type] = type_counts.get(disaster_type, 0) + 1
     return [{'type': k, 'count': v} for k, v in type_counts.items()]
 
 def process_regional_data(disasters):
     """Process disasters by region"""
     region_counts = {}
     for disaster in disasters:
-        countries = disaster['fields'].get('country', [])
-        for country in countries:
-            region = country.get('name', 'Unknown')
-            region_counts[region] = region_counts.get(region, 0) + 1
-
+        country = disaster['fields'].get('country', [{}])[0].get('name', 'Unknown')
+        region_counts[country] = region_counts.get(country, 0) + 1
     return [{'region': k, 'disasters': v} for k, v in region_counts.items()]
 
 def calculate_active_disasters(disasters):
