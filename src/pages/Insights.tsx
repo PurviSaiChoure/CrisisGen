@@ -268,35 +268,75 @@ export const Insights = () => {
             </div>
 
             {/* Quick Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {Object.entries(data.quick_stats).map(([key, stat], idx) => (
-                <motion.div
-                  key={key}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-white/5 backdrop-blur-lg rounded-xl p-6 border border-white/10 hover:border-blue-400/30 transition-all duration-300"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-400 uppercase tracking-wider">{key.replace(/_/g, ' ')}</p>
-                      <h3 className="text-3xl font-bold text-white mt-2">
-                        {typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value}
-                      </h3>
-                    </div>
-                    <div className={`p-3 rounded-lg ${stat.trend === 'up' ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
-                      {key === 'active_disasters' && <Activity className="w-6 h-6 text-green-400" />}
-                      {key === 'people_affected' && <Users className="w-6 h-6 text-blue-400" />}
-                      {key === 'avg_response_time' && <Clock className="w-6 h-6 text-purple-400" />}
-                    </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* People Affected Card */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white/5 backdrop-blur-lg rounded-xl p-6 border border-white/10 hover:border-blue-400/30 transition-all duration-300"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-400 uppercase tracking-wider">People Affected</p>
+                    <h3 className="text-3xl font-bold text-white mt-2">
+                      {data.quick_stats.people_affected.value.toLocaleString()}
+                    </h3>
                   </div>
-                  <div className="mt-4 flex items-center space-x-2">
-                    <span className={`text-sm ${stat.trend === 'up' ? 'text-green-400' : 'text-red-400'}`}>
-                      {stat.trend === 'up' ? '↑' : '↓'} {stat.change}%
-                    </span>
-                    <span className="text-sm text-gray-400">vs last month</span>
+                  <div className={`p-3 rounded-lg ${data.quick_stats.people_affected.trend === 'up' ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
+                    <Users className="w-6 h-6 text-blue-400" />
                   </div>
-                </motion.div>
-              ))}
+                </div>
+                <div className="mt-4 flex items-center space-x-2">
+                  <span className={`text-sm ${data.quick_stats.people_affected.trend === 'up' ? 'text-green-400' : 'text-red-400'}`}>
+                    {data.quick_stats.people_affected.trend === 'up' ? '↑' : '↓'} {data.quick_stats.people_affected.change}%
+                  </span>
+                  <span className="text-sm text-gray-400">vs last month</span>
+                </div>
+              </motion.div>
+
+              {/* Response Status Distribution */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white/5 backdrop-blur-lg rounded-xl p-6 border border-white/10 hover:border-blue-400/30 transition-all duration-300"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold text-white flex items-center space-x-2">
+                    <Activity className="w-5 h-5 text-yellow-400" />
+                    <span>Response Status</span>
+                  </h2>
+                </div>
+                <div className="h-48">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={data.disaster_data.status_distribution}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={40}
+                        outerRadius={60}
+                        paddingAngle={2}
+                        dataKey="count"
+                        nameKey="status"
+                      >
+                        {data.disaster_data.status_distribution.map((_, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'rgba(17, 24, 39, 0.9)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          borderRadius: '8px'
+                        }}
+                      />
+                      <Legend
+                        formatter={(value) => <span className="text-gray-300">{value}</span>}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </motion.div>
             </div>
 
             {/* Charts Grid */}
@@ -441,52 +481,6 @@ export const Insights = () => {
                     </div>
                   </div>
                 ))}
-              </div>
-            </motion.div>
-
-            {/* Status Distribution */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white/5 backdrop-blur-lg rounded-2xl p-6 border border-white/10 hover:border-blue-400/30 transition-all duration-300"
-            >
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-white flex items-center space-x-2">
-                  <Activity className="w-5 h-5 text-yellow-400" />
-                  <span>Response Status Distribution</span>
-                </h2>
-              </div>
-              <div className="h-64 flex">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={data.disaster_data.status_distribution}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={80}
-                      paddingAngle={2}
-                      dataKey="count"
-                      nameKey="status"
-                    >
-                      {data.disaster_data.status_distribution.map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Legend
-                      wrapperStyle={{ paddingTop: '20px' }}
-                      formatter={(value) => <span className="text-gray-300">{value}</span>}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'rgba(17, 24, 39, 0.9)',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        borderRadius: '8px',
-                        backdropFilter: 'blur(12px)'
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
               </div>
             </motion.div>
 
