@@ -28,6 +28,84 @@ COUNTRY_CENTROIDS = {
     "Germany": {"lat": 51.1657, "lon": 10.4515},
     "United Kingdom": {"lat": 55.3781, "lon": -3.4360},
     "South Africa": {"lat": -30.5595, "lon": 22.9375},
+    "Uganda": {"lat": 1.3733, "lon": 32.2903},
+    "Tanzania": {"lat": -6.3690, "lon": 34.8888},
+    "Ghana": {"lat": 7.9465, "lon": -1.0232},
+    "Gabon": {"lat": -0.8037, "lon": 11.6094},
+    "Comoros": {"lat": -11.6455, "lon": 43.3333},
+    "Angola": {"lat": -11.2027, "lon": 17.8739},
+    "Ethiopia": {"lat": 9.1450, "lon": 40.4897},
+    "Libya": {"lat": 26.3351, "lon": 17.2283},
+    "Algeria": {"lat": 28.0339, "lon": 1.6596},
+    "Senegal": {"lat": 14.4974, "lon": -14.4524},
+    "South Sudan": {"lat": 6.8770, "lon": 31.3070},
+    "Sierra Leone": {"lat": 8.4606, "lon": -11.7799},
+    "Kenya": {"lat": -0.0236, "lon": 37.9062},
+    "Central African Republic": {"lat": 6.6111, "lon": 20.9394},
+    "Cameroon": {"lat": 7.3697, "lon": 12.3547},
+    "Nigeria": {"lat": 9.0820, "lon": 8.6753},
+    "Guinea": {"lat": 9.9456, "lon": -9.6966},
+    "Mali": {"lat": 17.5707, "lon": -3.9962},
+    "Chad": {"lat": 15.4542, "lon": 18.7322},
+    "Sudan": {"lat": 12.8628, "lon": 30.2176},
+    "Burkina Faso": {"lat": 12.2383, "lon": -1.5616},
+    "Niger": {"lat": 17.6078, "lon": 8.0817},
+    "Malaysia": {"lat": 4.2105, "lon": 101.9758},
+    "Syria": {"lat": 34.8021, "lon": 38.9968},
+    "Cambodia": {"lat": 12.5657, "lon": 104.9910},
+    "Sri Lanka": {"lat": 7.8731, "lon": 80.7718},
+    "Nepal": {"lat": 28.3949, "lon": 84.1240},
+    "Yemen": {"lat": 15.5527, "lon": 48.5164},
+    "Thailand": {"lat": 15.8700, "lon": 100.9925},
+    "Laos": {"lat": 19.8563, "lon": 102.4955},
+    "Myanmar": {"lat": 21.9162, "lon": 95.9560},
+    "Pakistan": {"lat": 30.3753, "lon": 69.3451},
+    "Bangladesh": {"lat": 23.6850, "lon": 90.3563},
+    "Armenia": {"lat": 40.0691, "lon": 45.0382},
+    "Dominican Republic": {"lat": 18.7357, "lon": -70.1627},
+    "Cuba": {"lat": 21.5218, "lon": -77.7812},
+    "Colombia": {"lat": 4.5709, "lon": -74.2973},
+    "Costa Rica": {"lat": 9.7489, "lon": -83.7534},
+    "Haiti": {"lat": 18.9712, "lon": -72.2852},
+    "Belize": {"lat": 17.1899, "lon": -88.4976},
+    "Panama": {"lat": 8.5380, "lon": -80.7821},
+    "Bahamas": {"lat": 25.0343, "lon": -77.3963},
+    "Bolivia": {"lat": -16.2902, "lon": -63.5887},
+    "Guatemala": {"lat": 15.7835, "lon": -90.2308},
+    "El Salvador": {"lat": 13.7942, "lon": -88.8965},
+    "Honduras": {"lat": 15.2000, "lon": -86.2419},
+    "Barbados": {"lat": 13.1939, "lon": -59.5432},
+    "Grenada": {"lat": 12.1165, "lon": -61.6790},
+    "Uruguay": {"lat": -32.5228, "lon": -55.7658},
+    "Vanuatu": {"lat": -15.3767, "lon": 166.9592},
+    "Taiwan": {"lat": 23.5937, "lon": 121.0254},
+    "Bosnia and Herzegovina": {"lat": 43.9159, "lon": 17.6791},
+    "Papua New Guinea": {"lat": -6.3149, "lon": 143.9555},
+    "Lesotho": {"lat": -29.6100, "lon": 28.2336},
+    "Malawi": {"lat": -13.2543, "lon": 34.3015},
+    "Zimbabwe": {"lat": -19.0154, "lon": 29.1549},
+    "Rwanda": {"lat": -1.9403, "lon": 29.8739},
+    "Kyrgyzstan": {"lat": 41.2044, "lon": 74.7661},
+    "Somalia": {"lat": 5.1521, "lon": 46.1996},
+    "Kazakhstan": {"lat": 48.0196, "lon": 66.9237},
+    "Iraq": {"lat": 33.2232, "lon": 43.6793},
+    "Afghanistan": {"lat": 33.9391, "lon": 67.7100},
+    "Madagascar": {"lat": -18.7669, "lon": 46.8691},
+    "Iran": {"lat": 32.4279, "lon": 53.6880},
+    "Mozambique": {"lat": -18.6657, "lon": 35.5296},
+    "Namibia": {"lat": -22.9576, "lon": 18.4904},
+    "Botswana": {"lat": -22.3285, "lon": 24.6849},
+    "Cabo Verde": {"lat": 16.5388, "lon": -23.0418},
+}
+
+# Add these name mappings to handle variations in country names
+COUNTRY_NAME_MAPPINGS = {
+    "United Republic of Tanzania": "Tanzania",
+    "Syrian Arab Republic": "Syria",
+    "China - Taiwan Province": "Taiwan",
+    "Lao People's Democratic Republic (the)": "Laos",
+    "Bolivia (Plurinational State of)": "Bolivia",
+    "Iran (Islamic Republic of)": "Iran"
 }
 
 RELIEFWEB_API_URL = "https://api.reliefweb.int/v1/disasters"
@@ -80,6 +158,9 @@ def get_map_data():
             if not country_name:
                 continue
 
+            # Apply name mapping if it exists
+            country_name = COUNTRY_NAME_MAPPINGS.get(country_name, country_name)
+            
             centroid = COUNTRY_CENTROIDS.get(country_name)
             if not centroid:
                 logging.warning(f"No centroid data for country: {country_name}")
