@@ -270,9 +270,9 @@ export const Insights = () => {
             {/* Quick Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* People Affected Card */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
                 className="bg-white/5 backdrop-blur-lg rounded-xl p-6 border border-white/10 hover:border-blue-400/30 transition-all duration-300"
               >
                 <div className="flex items-center justify-between">
@@ -291,13 +291,13 @@ export const Insights = () => {
                     {data.quick_stats.people_affected.trend === 'up' ? '↑' : '↓'} {data.quick_stats.people_affected.change}%
                   </span>
                   <span className="text-sm text-gray-400">vs last month</span>
-                </div>
-              </motion.div>
+          </div>
+        </motion.div>
 
               {/* Response Status Distribution */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
                 className="bg-white/5 backdrop-blur-lg rounded-xl p-6 border border-white/10 hover:border-blue-400/30 transition-all duration-300"
               >
                 <div className="flex items-center justify-between mb-4">
@@ -478,8 +478,8 @@ export const Insights = () => {
                         className="h-full bg-gradient-to-r from-blue-400 to-purple-400 rounded-full"
                         style={{ width: `${(region.disasters / Math.max(...data.disaster_data.regional_data.map(r => r.disasters))) * 100}%` }}
                       />
-                    </div>
-                  </div>
+            </div>
+          </div>
                 ))}
               </div>
             </motion.div>
@@ -533,7 +533,7 @@ export const Insights = () => {
                 </button>
               </motion.div>
             )}
-          </motion.div>
+        </motion.div>
         </div>
       </div>
     </ErrorBoundary>

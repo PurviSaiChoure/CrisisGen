@@ -63,8 +63,8 @@ export const Communication = () => {
                     <option value="evacuation">Evacuation Notice</option>
                     <option value="update">Status Update</option>
                     <option value="resource">Resource Request</option>
-                  </select>
-                </div>
+              </select>
+            </div>
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-neutral-light">Target Audience</label>
@@ -78,8 +78,8 @@ export const Communication = () => {
                     <option value="emergency">Emergency Services</option>
                     <option value="ngos">NGOs</option>
                     <option value="government">Government Officials</option>
-                  </select>
-                </div>
+              </select>
+            </div>
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-neutral-light">Key Details</label>
@@ -104,7 +104,7 @@ export const Communication = () => {
                     <div className="flex items-center space-x-3">
                       <div className="animate-spin h-5 w-5 border-2 border-white/30 border-t-white rounded-full"></div>
                       <span>Generating Template...</span>
-                    </div>
+            </div>
                   ) : (
                     <>
                       <MessageSquare className="w-5 h-5" />
@@ -112,14 +112,14 @@ export const Communication = () => {
                     </>
                   )}
                 </button>
-              </form>
-            </motion.div>
+          </form>
+        </motion.div>
 
             {/* Generated Message */}
-            <motion.div
+        <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
+          transition={{ delay: 0.2 }}
               className="bg-white/5 backdrop-blur-lg rounded-2xl p-6 border border-white/10"
             >
               <div className="flex items-center justify-between mb-6">
@@ -134,8 +134,8 @@ export const Communication = () => {
                   <h3 className="text-lg font-heading font-semibold text-primary-light mb-3">Preview</h3>
                   <p className="text-gray-300 leading-relaxed">
                     {generatedMessage || 'Generated message will appear here...'}
-                  </p>
-                </div>
+              </p>
+            </div>
 
                 <div className="grid grid-cols-3 gap-4">
                   <button className="flex items-center justify-center space-x-2 bg-primary/20 hover:bg-primary/30 text-primary-light rounded-xl p-4 transition-colors duration-300">
@@ -151,7 +151,7 @@ export const Communication = () => {
                     <span>Share</span>
                   </button>
                 </div>
-              </div>
+            </div>
             </motion.div>
           </div>
         </motion.div>

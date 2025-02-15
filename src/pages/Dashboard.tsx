@@ -301,6 +301,7 @@ export const Dashboard = () => {
                       dataKey="date" 
                       stroke="rgba(255,255,255,0.5)"
                       tick={{ fill: 'rgba(255,255,255,0.5)' }}
+                      tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     />
                     <YAxis 
                       stroke="rgba(255,255,255,0.5)"
@@ -310,9 +311,16 @@ export const Dashboard = () => {
                       contentStyle={{
                         backgroundColor: 'rgba(17, 24, 39, 0.9)',
                         border: '1px solid rgba(255, 255, 255, 0.1)',
-                        borderRadius: '8px'
+                        borderRadius: '8px',
+                        padding: '8px'
                       }}
                       labelStyle={{ color: 'rgba(255,255,255,0.8)' }}
+                      labelFormatter={(value) => new Date(value).toLocaleDateString('en-US', { 
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
                     />
                     <Line
                       type="monotone"
@@ -320,7 +328,8 @@ export const Dashboard = () => {
                       stroke="#3b82f6"
                       strokeWidth={2}
                       dot={{ fill: '#3b82f6', strokeWidth: 2 }}
-                      name="Responses"
+                      name="Response Operations"
+                      activeDot={{ r: 6, fill: '#3b82f6' }}
                     />
                     <Line
                       type="monotone"
@@ -328,7 +337,8 @@ export const Dashboard = () => {
                       stroke="#ef4444"
                       strokeWidth={2}
                       dot={{ fill: '#ef4444', strokeWidth: 2 }}
-                      name="Alerts"
+                      name="Emergency Alerts"
+                      activeDot={{ r: 6, fill: '#ef4444' }}
                     />
                   </LineChart>
                 </ResponsiveContainer>

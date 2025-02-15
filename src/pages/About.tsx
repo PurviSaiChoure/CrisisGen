@@ -67,9 +67,9 @@ export const About = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800">
       <div className="pt-20 px-6 max-w-7xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
           className="space-y-12"
         >
           {/* Hero Section */}
@@ -122,7 +122,7 @@ export const About = () => {
                 <feature.icon className="w-10 h-10 mb-4" />
                 <h3 className="text-xl font-heading font-bold mb-2">{feature.title}</h3>
                 <p className="text-neutral-light leading-relaxed">{feature.description}</p>
-              </motion.div>
+          </motion.div>
             ))}
           </div>
 
@@ -172,8 +172,8 @@ export const About = () => {
               </button>
             </div>
           </motion.div>
-        </motion.div>
-      </div>
+          </motion.div>
+        </div>
     </div>
   );
 };

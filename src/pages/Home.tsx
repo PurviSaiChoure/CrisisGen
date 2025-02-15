@@ -137,8 +137,8 @@ export const Home = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.1 }}
-                >
-                  <Link
+          >
+            <Link
                     to={action.path}
                     className={`${action.color} text-white/90 px-8 py-4 rounded-xl 
                       flex items-center gap-3 transition-all duration-300
@@ -149,7 +149,7 @@ export const Home = () => {
                   >
                     <action.icon className="w-5 h-5" />
                     <span className="font-medium">{action.title}</span>
-                  </Link>
+            </Link>
                 </motion.div>
               ))}
             </div>
