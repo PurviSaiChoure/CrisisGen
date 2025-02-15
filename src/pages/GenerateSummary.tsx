@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   FileText, Search, Clock, Globe, AlertTriangle, 
-  BookOpen, Download, Share2, Loader, ArrowRight, Users, Shield 
+  BookOpen, Download, Share2, Loader, ArrowRight, Users, Shield, X 
 } from 'lucide-react';
 
 interface SummaryFilters {
@@ -55,6 +55,13 @@ interface StructuredSummary {
   sources: string[];
 }
 
+// Add these interfaces
+interface ShareModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onShare: (emails: string[]) => void;
+}
+
 export const GenerateSummary = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
@@ -68,6 +75,7 @@ export const GenerateSummary = () => {
   const [summary, setSummary] = useState<string>('');
   const [serverStatus, setServerStatus] = useState<'checking' | 'online' | 'offline'>('checking');
   const [structuredSummary, setStructuredSummary] = useState<StructuredSummary | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   useEffect(() => {
     checkServerStatus();
@@ -175,6 +183,80 @@ export const GenerateSummary = () => {
     </motion.div>
   );
 
+  const handleDownload = async () => {
+    try {
+      if (!summary) {
+        setError('No summary to download');
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/download-summary`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: summary,
+          metadata: summaryFilters
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `disaster_summary_${new Date().toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading summary:', error);
+      setError('Failed to download summary');
+    }
+  };
+
+  const handleShare = async (recipients: string[]) => {
+    try {
+      if (!summary) {
+        setError('No summary to share');
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/share-summary`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: summary,
+          recipients,
+          metadata: summaryFilters
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        if (data.status === 'partial_success') {
+          alert(`Summary shared successfully to some recipients.\nFailed recipients: ${data.failed_recipients.join(', ')}`);
+        } else {
+          alert('Summary shared successfully!');
+        }
+        setShowShareModal(false);
+      } else {
+        throw new Error(data.error || 'Failed to share summary');
+      }
+    } catch (error) {
+      console.error('Error sharing summary:', error);
+      setError(error instanceof Error ? error.message : 'Failed to share summary');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800">
       <div className="pt-20 px-6 max-w-7xl mx-auto">
@@ -268,10 +350,16 @@ export const GenerateSummary = () => {
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-2xl font-heading font-bold text-primary-light">Generated Summary</h2>
                   <div className="flex space-x-2">
-                    <button className="p-2 hover:bg-white/5 rounded-lg transition-colors duration-300">
+                    <button
+                      onClick={handleDownload}
+                      className="p-2 hover:bg-white/5 rounded-lg transition-colors duration-300"
+                    >
                       <Download className="w-5 h-5 text-primary-light" />
                     </button>
-                    <button className="p-2 hover:bg-white/5 rounded-lg transition-colors duration-300">
+                    <button
+                      onClick={() => setShowShareModal(true)}
+                      className="p-2 hover:bg-white/5 rounded-lg transition-colors duration-300"
+                    >
                       <Share2 className="w-5 h-5 text-primary-light" />
                     </button>
                   </div>
@@ -313,6 +401,98 @@ export const GenerateSummary = () => {
             </motion.div>
           </div>
         </motion.div>
+      </div>
+
+      {showShareModal && (
+        <ShareModal
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          onShare={handleShare}
+        />
+      )}
+    </div>
+  );
+};
+
+// Add ShareModal component
+const ShareModal = ({ isOpen, onClose, onShare }: ShareModalProps) => {
+  const [emails, setEmails] = useState<string[]>(['']);
+  const [error, setError] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate emails
+    const validEmails = emails.filter(email => 
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+    );
+    
+    if (validEmails.length === 0) {
+      setError('Please enter at least one valid email address');
+      return;
+    }
+    
+    onShare(validEmails);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-gray-800 rounded-xl p-6 w-full max-w-md">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-xl font-bold text-primary-light">Share Summary</h3>
+          <button onClick={onClose} className="text-neutral-light hover:text-white">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {emails.map((email, index) => (
+            <div key={index} className="flex gap-2">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  const newEmails = [...emails];
+                  newEmails[index] = e.target.value;
+                  setEmails(newEmails);
+                }}
+                placeholder="Enter email address"
+                className="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white"
+              />
+              {index === emails.length - 1 ? (
+                <button
+                  type="button"
+                  onClick={() => setEmails([...emails, ''])}
+                  className="px-4 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30"
+                >
+                  +
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newEmails = emails.filter((_, i) => i !== index);
+                    setEmails(newEmails);
+                  }}
+                  className="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30"
+                >
+                  -
+                </button>
+              )}
+            </div>
+          ))}
+          
+          {error && (
+            <p className="text-red-400 text-sm">{error}</p>
+          )}
+          
+          <button
+            type="submit"
+            className="w-full btn-primary"
+          >
+            Share Summary
+          </button>
+        </form>
       </div>
     </div>
   );

@@ -3,10 +3,18 @@ from phi.model.together import Together
 from phi.tools.duckduckgo import DuckDuckGo
 from phi.tools.newspaper4k import Newspaper4k
 from dotenv import load_dotenv
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import logging
 import re
+import os
+from datetime import datetime
+import json
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import smtplib
+import tempfile
+import uuid
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -17,6 +25,16 @@ load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
+
+# Add these at the top with other imports
+app.config['TEMP_FOLDER'] = tempfile.gettempdir()
+app.config['SMTP_SERVER'] = 'smtp.gmail.com'
+app.config['SMTP_PORT'] = 587
+app.config['SMTP_EMAIL'] = os.getenv('SMTP_EMAIL')
+app.config['SMTP_PASSWORD'] = os.getenv('SMTP_PASSWORD')
+
+# Add this function to store summaries temporarily
+summaries_store = {}  # In-memory store (replace with database in production)
 
 def clean_response(text):
     """Clean and format the response text"""
@@ -302,9 +320,17 @@ def generate_summary():
             cleaned_report = clean_response(str(final_report.content))
             formatted_report = format_markdown_sections(cleaned_report)
 
+            # Generate a unique ID for the summary
+            summary_id = str(uuid.uuid4())
+            summaries_store[summary_id] = {
+                'content': formatted_report,
+                'metadata': filters
+            }
+            
             return jsonify({
                 'status': 'success',
-                'summary': formatted_report
+                'summary': formatted_report,
+                'summaryId': summary_id  # Send this back to frontend
             })
 
         except Exception as agent_error:
@@ -320,6 +346,144 @@ def generate_summary():
             'status': 'error',
             'error': "An unexpected error occurred. Please try again later."
         }), 500
+
+@app.route('/download-summary', methods=['POST'])
+def download_summary():
+    try:
+        data = request.get_json()
+        summary_content = data.get('content')
+        metadata = data.get('metadata', {})
+        
+        if not summary_content:
+            return jsonify({'error': 'No content provided'}), 400
+
+        # Create temporary file
+        timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        filename = f"disaster_summary_{timestamp}.txt"
+        filepath = os.path.join(app.config['TEMP_FOLDER'], filename)
+        
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(f"Disaster Response Summary\n")
+            f.write(f"Generated on: {timestamp}\n")
+            f.write(f"Type: {metadata.get('disasterType', 'Not specified')}\n")
+            f.write(f"Location: {metadata.get('location', 'Not specified')}\n")
+            f.write(f"Timeframe: {metadata.get('timeframe', 'Not specified')}\n")
+            f.write("\n--- Summary Content ---\n\n")
+            f.write(summary_content)
+
+        return send_file(
+            filepath,
+            as_attachment=True,
+            download_name=filename,
+            mimetype='text/plain'
+        )
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/share-summary', methods=['POST'])
+def share_summary():
+    try:
+        data = request.get_json()
+        recipients = data.get('recipients', [])
+        summary_content = data.get('content')
+        metadata = data.get('metadata', {})
+        
+        if not summary_content or not recipients:
+            return jsonify({'error': 'Missing required data'}), 400
+
+        failed_recipients = []
+        successful_recipients = []
+
+        # Send email to each recipient
+        for recipient in recipients:
+            try:
+                send_email(
+                    recipient=recipient,
+                    subject="Disaster Response Summary",
+                    content=summary_content,
+                    metadata=metadata
+                )
+                successful_recipients.append(recipient)
+            except Exception as e:
+                logging.error(f"Failed to send email to {recipient}: {str(e)}")
+                failed_recipients.append(recipient)
+
+        if failed_recipients:
+            return jsonify({
+                'status': 'partial_success',
+                'message': 'Some emails failed to send',
+                'successful_recipients': successful_recipients,
+                'failed_recipients': failed_recipients
+            }), 207
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Summary shared successfully',
+            'recipients': successful_recipients
+        })
+
+    except Exception as e:
+        logging.error(f"Share summary error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+def send_email(recipient, subject, content, metadata):
+    try:
+        # Create message container
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = subject
+        msg['From'] = app.config['SMTP_EMAIL']
+        msg['To'] = recipient
+
+        # Create the body of the message
+        text_content = f"""
+Disaster Response Summary
+
+Type: {metadata.get('disasterType', 'Not specified')}
+Location: {metadata.get('location', 'Not specified')}
+Timeframe: {metadata.get('timeframe', 'Not specified')}
+
+{content}
+        """
+
+        html_content = f"""
+<html>
+<head></head>
+<body>
+    <h1>Disaster Response Summary</h1>
+    <p><strong>Type:</strong> {metadata.get('disasterType', 'Not specified')}</p>
+    <p><strong>Location:</strong> {metadata.get('location', 'Not specified')}</p>
+    <p><strong>Timeframe:</strong> {metadata.get('timeframe', 'Not specified')}</p>
+    <hr>
+    <div style="white-space: pre-wrap;">
+    {content}
+    </div>
+</body>
+</html>
+        """
+
+        # Record the MIME types
+        part1 = MIMEText(text_content, 'plain')
+        part2 = MIMEText(html_content, 'html')
+
+        # Attach parts into message container
+        msg.attach(part1)
+        msg.attach(part2)
+
+        # Send the email
+        try:
+            with smtplib.SMTP(app.config['SMTP_SERVER'], app.config['SMTP_PORT']) as server:
+                server.starttls()
+                server.login(app.config['SMTP_EMAIL'], app.config['SMTP_PASSWORD'])
+                server.send_message(msg)
+                logging.info(f"Email sent successfully to {recipient}")
+                return True
+        except Exception as e:
+            logging.error(f"SMTP Error: {str(e)}")
+            raise Exception(f"Failed to send email: {str(e)}")
+
+    except Exception as e:
+        logging.error(f"Error sending email: {str(e)}")
+        raise
 
 if __name__ == '__main__':
     logger.info("Starting Flask server...")
