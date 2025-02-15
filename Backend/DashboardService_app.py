@@ -163,6 +163,32 @@ def get_recent_alerts():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/dashboard/activity', methods=['GET'])
+def get_activity_data():
+    """Get response activity data for the last 7 days"""
+    try:
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=7)
+        
+        # Generate sample activity data (replace with real data in production)
+        activity_data = []
+        current_date = start_date
+        
+        while current_date <= end_date:
+            # Simulate some activity data
+            activity_data.append({
+                'date': current_date.strftime('%Y-%m-%d'),
+                'responses': int(hash(current_date.strftime('%Y-%m-%d')) % 50 + 20),  # Random number between 20-70
+                'alerts': int(hash(current_date.strftime('%Y-%m-%d')) % 30 + 10)      # Random number between 10-40
+            })
+            current_date += timedelta(days=1)
+        
+        return jsonify({
+            'activity': activity_data
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # Cache the dashboard data for 1 hour
 @lru_cache(maxsize=1)
 def get_cached_dashboard_data():

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import Map, { Source, Layer, Popup } from 'react-map-gl';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { 
   AlertTriangle, FileText, Send, Users, Clock, 
   Shield, Activity, BarChart3, ArrowUp, ArrowDown,
@@ -8,9 +8,12 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { FeatureCollection, Feature, Point } from 'geojson';
-import 'mapbox-gl/dist/mapbox-gl.css';
-
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
+import 'leaflet/dist/leaflet.css';
+import { icon } from 'leaflet';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface DashboardStats {
   quick_stats: {
@@ -37,6 +40,22 @@ interface RecentAlert {
   color: string;
 }
 
+interface ActivityData {
+  date: string;
+  responses: number;
+  alerts: number;
+}
+
+const defaultIcon = icon({
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+  iconRetinaUrl,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
 export const Dashboard = () => {
   const navigate = useNavigate();
   const [selectedDisaster, setSelectedDisaster] = useState(null);
@@ -45,6 +64,7 @@ export const Dashboard = () => {
   const [recentAlerts, setRecentAlerts] = useState<RecentAlert[]>([]);
   const [activeDisasters, setActiveDisasters] = useState<any[]>([]);
   const [popupInfo, setPopupInfo] = useState<Feature<Point> | null>(null);
+  const [activityData, setActivityData] = useState<ActivityData[]>([]);
 
   const mainActions = [
     { 
@@ -112,6 +132,20 @@ export const Dashboard = () => {
     fetchDashboardData();
     const interval = setInterval(fetchDashboardData, 3600000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const fetchActivityData = async () => {
+      try {
+        const response = await fetch('http://localhost:5002/api/dashboard/activity');
+        const data = await response.json();
+        setActivityData(data.activity);
+      } catch (error) {
+        console.error('Error fetching activity data:', error);
+      }
+    };
+
+    fetchActivityData();
   }, []);
 
   return (
@@ -204,60 +238,41 @@ export const Dashboard = () => {
               </div>
               <div className="p-4">
                 <div className="h-[500px] rounded-xl overflow-hidden">
-                  <Map
-                    mapboxAccessToken={MAPBOX_TOKEN}
-                    initialViewState={{
-                      longitude: 0,
-                      latitude: 20,
-                      zoom: 1.5
-                    }}
-                    style={{width: '100%', height: '100%'}}
-                    mapStyle="mapbox://styles/mapbox/dark-v11"
-                    interactiveLayerIds={['disasters']}
-                    onClick={(event: any) => {
-                      const feature = event.features?.[0];
-                      if (feature) {
-                        setPopupInfo(feature as Feature<Point>);
-                      }
-                    }}
+                  <MapContainer
+                    center={[20, 0]}
+                    zoom={2}
+                    style={{ height: '100%', width: '100%' }}
+                    className="rounded-xl"
                   >
-                    {mapData && (
-                      <Source type="geojson" data={mapData}>
-                        <Layer
-                          id="disasters"
-                          type="circle"
-                          paint={{
-                            'circle-radius': 8,
-                            'circle-color': [
-                              'match',
-                              ['get', 'status'],
-                              'alert', '#ef4444',
-                              'ongoing', '#f97316',
-                              '#71717a'
-                            ],
-                            'circle-opacity': 0.8,
-                            'circle-stroke-width': 2,
-                            'circle-stroke-color': '#ffffff'
-                          }}
-                        />
-                      </Source>
-                    )}
-
-                    {popupInfo && (
-                      <Popup
-                        longitude={popupInfo.geometry.coordinates[0]}
-                        latitude={popupInfo.geometry.coordinates[1]}
-                        anchor="bottom"
-                        onClose={() => setPopupInfo(null)}
+                    <TileLayer
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
+                    {mapData?.features.map((feature, index) => (
+                      <Marker
+                        key={index}
+                        position={[
+                          feature.geometry.coordinates[1],
+                          feature.geometry.coordinates[0]
+                        ]}
+                        icon={defaultIcon}
                       >
-                        <div className="p-2">
-                          <h3 className="font-medium text-gray-900">{popupInfo.properties?.name}</h3>
-                          <p className="text-sm text-gray-600">{popupInfo.properties?.type}</p>
-                          <p className="text-sm text-gray-600">{popupInfo.properties?.country}</p>
-                        </div>
-                      </Popup>
-                    )}
-                  </Map>
+                        <Popup>
+                          <div className="p-2">
+                            <h3 className="font-medium text-gray-900">
+                                {feature.properties ? feature.properties.name : 'Unknown Name'}
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                                {feature.properties ? feature.properties.type : 'Unknown Type'}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                                {feature.properties ? feature.properties.country : 'Unknown Country'}
+                            </p>
+                          </div>
+                        </Popup>
+                      </Marker>
+                    ))}
+                  </MapContainer>
                 </div>
               </div>
             </motion.div>
@@ -266,14 +281,57 @@ export const Dashboard = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white/5 backdrop-blur-lg rounded-2xl border border-white/10 p-4"
+              className="bg-white/5 backdrop-blur-lg rounded-2xl border border-white/10 p-6"
             >
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-heading font-bold text-primary-light">Response Activity</h2>
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-xl font-heading font-bold text-primary-light">Response Activity</h2>
+                  <p className="text-sm text-neutral-light">Last 7 days of response operations</p>
+                </div>
                 <Activity className="w-5 h-5 text-primary-light" />
               </div>
-              <div className="h-[200px] flex items-center justify-center">
-                <BarChart3 className="w-8 h-8 text-neutral-light opacity-50" />
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={activityData}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                    <XAxis 
+                      dataKey="date" 
+                      stroke="rgba(255,255,255,0.5)"
+                      tick={{ fill: 'rgba(255,255,255,0.5)' }}
+                    />
+                    <YAxis 
+                      stroke="rgba(255,255,255,0.5)"
+                      tick={{ fill: 'rgba(255,255,255,0.5)' }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'rgba(17, 24, 39, 0.9)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '8px'
+                      }}
+                      labelStyle={{ color: 'rgba(255,255,255,0.8)' }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="responses"
+                      stroke="#3b82f6"
+                      strokeWidth={2}
+                      dot={{ fill: '#3b82f6', strokeWidth: 2 }}
+                      name="Responses"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="alerts"
+                      stroke="#ef4444"
+                      strokeWidth={2}
+                      dot={{ fill: '#ef4444', strokeWidth: 2 }}
+                      name="Alerts"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
             </motion.div>
           </div>
