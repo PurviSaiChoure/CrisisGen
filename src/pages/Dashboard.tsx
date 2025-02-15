@@ -4,7 +4,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { 
   AlertTriangle, FileText, Send, Users, Clock, 
   Shield, Activity, BarChart3, ArrowUp, ArrowDown,
-  MapPin, Building, Radio, Bell, ChevronRight
+  MapPin, Building, Radio, Bell, ChevronRight, ChevronLeft
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { FeatureCollection, Feature, Point } from 'geojson';
@@ -65,6 +65,7 @@ export const Dashboard = () => {
   const [activeDisasters, setActiveDisasters] = useState<any[]>([]);
   const [popupInfo, setPopupInfo] = useState<Feature<Point> | null>(null);
   const [activityData, setActivityData] = useState<ActivityData[]>([]);
+  const [scrollIndex, setScrollIndex] = useState(0);
 
   const mainActions = [
     { 
@@ -147,6 +148,14 @@ export const Dashboard = () => {
 
     fetchActivityData();
   }, []);
+
+  const handleScroll = (direction: 'next' | 'prev') => {
+    if (direction === 'next') {
+      setScrollIndex(prev => Math.min(prev + 3, activeDisasters.length - 3));
+    } else {
+      setScrollIndex(prev => Math.max(prev - 3, 0));
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800">
@@ -357,37 +366,22 @@ export const Dashboard = () => {
               <div className="p-4 border-b border-white/10">
                 <h2 className="text-xl font-heading font-bold text-primary-light">Active Disasters</h2>
               </div>
-              <div className="p-4 space-y-4">
-                {activeDisasters.map((disaster, idx) => (
-                  <motion.div
-                    key={idx}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.1 }}
-                    className="bg-white/5 rounded-xl p-4 hover:bg-white/10 transition-all duration-300 cursor-pointer"
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-medium text-primary-light">{disaster.name}</h3>
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        disaster.status === 'alert' ? 'bg-red-500/20 text-red-400' :
-                        disaster.status === 'ongoing' ? 'bg-orange-500/20 text-orange-400' :
-                        'bg-yellow-500/20 text-yellow-400'
-                      }`}>
-                        {disaster.status}
-                      </span>
-                    </div>
-                    <div className="space-y-2 text-sm text-neutral-light">
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4" />
-                        {disaster.country}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4" />
-                        {disaster.type}
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
+              <div className="relative">
+                <div className="overflow-x-auto hide-scrollbar">
+                  <div className="flex p-4 gap-4" style={{ minWidth: 'min-content' }}>
+                    {activeDisasters.map((disaster, idx) => (
+                      <motion.div
+                        key={idx}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.1 }}
+                        className="w-[300px] flex-shrink-0 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all duration-300 cursor-pointer"
+                      >
+                        <DisasterCard disaster={disaster} />
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </motion.div>
 
@@ -429,3 +423,29 @@ export const Dashboard = () => {
     </div>
   );
 };
+
+// Add this DisasterCard component for better organization
+const DisasterCard = ({ disaster }: { disaster: any }) => (
+  <>
+    <div className="flex justify-between items-start mb-2">
+      <h3 className="font-medium text-primary-light">{disaster.name}</h3>
+      <span className={`px-2 py-1 rounded-full text-xs ${
+        disaster.status === 'alert' ? 'bg-red-500/20 text-red-400' :
+        disaster.status === 'ongoing' ? 'bg-orange-500/20 text-orange-400' :
+        'bg-yellow-500/20 text-yellow-400'
+      }`}>
+        {disaster.status}
+      </span>
+    </div>
+    <div className="space-y-2 text-sm text-neutral-light">
+      <div className="flex items-center gap-2">
+        <MapPin className="w-4 h-4" />
+        {disaster.country}
+      </div>
+      <div className="flex items-center gap-2">
+        <Users className="w-4 h-4" />
+        {disaster.type}
+      </div>
+    </div>
+  </>
+);
