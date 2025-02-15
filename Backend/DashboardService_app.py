@@ -163,12 +163,12 @@ def get_recent_alerts():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# Cache the dashboard data for 5 minutes
+# Cache the dashboard data for 1 hour
 @lru_cache(maxsize=1)
 def get_cached_dashboard_data():
     return {
         'map_data': fetch_active_disasters(),
-        'timestamp': int(time() / 300)  # Changes every 5 minutes
+        'timestamp': int(time() / 3600)  # Changes every hour instead of every 5 minutes
     }
 
 if __name__ == '__main__':

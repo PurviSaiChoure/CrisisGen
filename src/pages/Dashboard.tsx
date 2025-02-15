@@ -10,6 +10,8 @@ import { useNavigate } from 'react-router-dom';
 import type { FeatureCollection, Feature, Point } from 'geojson';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
+
 interface DashboardStats {
   quick_stats: {
     active_disasters: { value: number; change: string; trend: string };
@@ -108,7 +110,7 @@ export const Dashboard = () => {
     };
 
     fetchDashboardData();
-    const interval = setInterval(fetchDashboardData, 300000);
+    const interval = setInterval(fetchDashboardData, 3600000);
     return () => clearInterval(interval);
   }, []);
 
@@ -203,7 +205,7 @@ export const Dashboard = () => {
               <div className="p-4">
                 <div className="h-[500px] rounded-xl overflow-hidden">
                   <Map
-                    mapboxAccessToken="pk.eyJ1Ijoiam9obmRvZSIsImEiOiJja2xnbDJtMjMwYWJvMnBsZHBqNDg4YnR4In0.example"
+                    mapboxAccessToken={MAPBOX_TOKEN}
                     initialViewState={{
                       longitude: 0,
                       latitude: 20,
