@@ -1,112 +1,48 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import Map from 'react-map-gl';
+import Map, { Source, Layer, Popup } from 'react-map-gl';
 import { 
   AlertTriangle, FileText, Send, Users, Clock, 
   Shield, Activity, BarChart3, ArrowUp, ArrowDown,
   MapPin, Building, Radio, Bell, ChevronRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import type { FeatureCollection, Feature, Point } from 'geojson';
+import 'mapbox-gl/dist/mapbox-gl.css';
 
-const quickStats = [
-  { 
-    label: "Active Disasters",
-    value: "12",
-    change: "+2",
-    trend: "up",
-    icon: AlertTriangle,
-    color: "text-orange-400",
-    bg: "bg-orange-500/10"
-  },
-  { 
-    label: "Response Teams",
-    value: "45",
-    change: "+5",
-    trend: "up",
-    icon: Users,
-    color: "text-blue-400",
-    bg: "bg-blue-500/10"
-  },
-  { 
-    label: "Avg Response Time",
-    value: "8.5m",
-    change: "-2.3",
-    trend: "down",
-    icon: Clock,
-    color: "text-green-400",
-    bg: "bg-green-500/10"
-  },
-  { 
-    label: "Resources Deployed",
-    value: "1.2k",
-    change: "+123",
-    trend: "up",
-    icon: Shield,
-    color: "text-purple-400",
-    bg: "bg-purple-500/10"
-  }
-];
+interface DashboardStats {
+  quick_stats: {
+    active_disasters: { value: number; change: string; trend: string };
+    response_teams: { value: number; change: string; trend: string };
+    avg_response_time: { value: string; change: string; trend: string };
+    resources_deployed: { value: string; change: string; trend: string };
+  };
+  disaster_types: Array<{ type: string; count: number }>;
+  affected_regions: Array<{ region: string; count: number }>;
+}
 
-const activeDisasters = [
-  {
-    name: "Flood in Southeast Asia",
-    type: "Flood",
-    severity: "Critical",
-    location: "Vietnam, Cambodia",
-    affectedPeople: "25,000+",
-    timestamp: "2 hours ago",
-    color: "bg-red-500/20 text-red-400"
-  },
-  {
-    name: "Wildfire in California",
-    type: "Fire",
-    severity: "High",
-    location: "Northern California, USA",
-    affectedPeople: "12,000+",
-    timestamp: "5 hours ago",
-    color: "bg-orange-500/20 text-orange-400"
-  },
-  {
-    name: "Earthquake in Japan",
-    type: "Earthquake",
-    severity: "Medium",
-    location: "Osaka Region, Japan",
-    affectedPeople: "8,000+",
-    timestamp: "1 day ago",
-    color: "bg-yellow-500/20 text-yellow-400"
-  }
-];
+interface MapData {
+  type: string;
+  features: Feature<Point>[];
+}
 
-const recentAlerts = [
-  {
-    title: "Emergency Evacuation",
-    location: "Coastal Region, Vietnam",
-    type: "Critical",
-    time: "10 minutes ago",
-    icon: Bell,
-    color: "text-red-400"
-  },
-  {
-    title: "Resource Deployment",
-    location: "Northern California",
-    type: "Update",
-    time: "25 minutes ago",
-    icon: Send,
-    color: "text-blue-400"
-  },
-  {
-    title: "Situation Update",
-    location: "Osaka, Japan",
-    type: "Info",
-    time: "1 hour ago",
-    icon: Radio,
-    color: "text-green-400"
-  }
-];
+interface RecentAlert {
+  title: string;
+  location: string;
+  type: string;
+  time: string;
+  icon: any;
+  color: string;
+}
 
 export const Dashboard = () => {
   const navigate = useNavigate();
   const [selectedDisaster, setSelectedDisaster] = useState(null);
+  const [mapData, setMapData] = useState<MapData | null>(null);
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
+  const [recentAlerts, setRecentAlerts] = useState<RecentAlert[]>([]);
+  const [activeDisasters, setActiveDisasters] = useState<any[]>([]);
+  const [popupInfo, setPopupInfo] = useState<Feature<Point> | null>(null);
 
   const mainActions = [
     { 
@@ -134,6 +70,47 @@ export const Dashboard = () => {
       shadow: "shadow-rose-500/20"
     }
   ];
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const [mapResponse, statsResponse, alertsResponse] = await Promise.all([
+          fetch('http://localhost:5002/api/dashboard/map-data'),
+          fetch('http://localhost:5002/api/dashboard/stats'),
+          fetch('http://localhost:5002/api/dashboard/recent-alerts')
+        ]);
+
+        const mapData = await mapResponse.json();
+        const statsData = await statsResponse.json();
+        const alertsData = await alertsResponse.json();
+
+        setMapData(mapData);
+        setDashboardStats(statsData);
+        setActiveDisasters(mapData.features.map((feature: any) => ({
+          name: feature.properties.name,
+          status: feature.properties.status,
+          country: feature.properties.country,
+          type: feature.properties.type
+        })));
+        
+        // Transform alerts data to match RecentAlert interface
+        setRecentAlerts(alertsData.alerts.map((alert: any) => ({
+          title: alert.title,
+          location: alert.location,
+          type: alert.type,
+          time: alert.time,
+          icon: alert.type === 'Critical' ? Bell : Radio,
+          color: alert.type === 'Critical' ? 'text-red-400' : 'text-blue-400'
+        })));
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      }
+    };
+
+    fetchDashboardData();
+    const interval = setInterval(fetchDashboardData, 300000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800">
@@ -179,25 +156,37 @@ export const Dashboard = () => {
           <div className="lg:col-span-8 space-y-6">
             {/* Quick Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {quickStats.map((stat, idx) => (
+              {dashboardStats && Object.entries(dashboardStats.quick_stats).map(([key, stat], idx) => (
                 <motion.div
                   key={idx}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.1 }}
-                  className={`${stat.bg} backdrop-blur-lg rounded-2xl p-4 border border-white/10`}
+                  className={`backdrop-blur-lg rounded-2xl p-4 border border-white/10 
+                    ${key.includes('active') ? 'bg-orange-500/10' : 
+                      key.includes('teams') ? 'bg-blue-500/10' : 
+                      key.includes('time') ? 'bg-green-500/10' : 'bg-purple-500/10'}`}
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <stat.icon className={`w-6 h-6 ${stat.color}`} />
-                    <span className={`text-xs font-medium flex items-center gap-1 ${
-                      stat.trend === 'up' ? 'text-green-400' : 'text-red-400'
+                    <div className={`w-6 h-6 ${
+                      key.includes('active') ? 'text-orange-400' :
+                      key.includes('teams') ? 'text-blue-400' :
+                      key.includes('time') ? 'text-green-400' : 'text-purple-400'
                     }`}>
+                      {key.includes('active') ? <AlertTriangle /> :
+                       key.includes('teams') ? <Users /> :
+                       key.includes('time') ? <Clock /> : <Shield />}
+                    </div>
+                    <span className={`text-xs font-medium flex items-center gap-1 
+                      ${stat.trend === 'up' ? 'text-green-400' : 'text-red-400'}`}>
                       {stat.trend === 'up' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
                       {stat.change}
                     </span>
                   </div>
                   <h3 className="text-2xl font-bold text-primary-light">{stat.value}</h3>
-                  <p className="text-sm text-neutral-light mt-1">{stat.label}</p>
+                  <p className="text-sm text-neutral-light mt-1">
+                    {key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                  </p>
                 </motion.div>
               ))}
             </div>
@@ -214,14 +203,59 @@ export const Dashboard = () => {
               <div className="p-4">
                 <div className="h-[500px] rounded-xl overflow-hidden">
                   <Map
+                    mapboxAccessToken="pk.eyJ1Ijoiam9obmRvZSIsImEiOiJja2xnbDJtMjMwYWJvMnBsZHBqNDg4YnR4In0.example"
                     initialViewState={{
-                      longitude: -100,
-                      latitude: 40,
-                      zoom: 3.5
+                      longitude: 0,
+                      latitude: 20,
+                      zoom: 1.5
                     }}
                     style={{width: '100%', height: '100%'}}
                     mapStyle="mapbox://styles/mapbox/dark-v11"
-                  />
+                    interactiveLayerIds={['disasters']}
+                    onClick={(event: any) => {
+                      const feature = event.features?.[0];
+                      if (feature) {
+                        setPopupInfo(feature as Feature<Point>);
+                      }
+                    }}
+                  >
+                    {mapData && (
+                      <Source type="geojson" data={mapData}>
+                        <Layer
+                          id="disasters"
+                          type="circle"
+                          paint={{
+                            'circle-radius': 8,
+                            'circle-color': [
+                              'match',
+                              ['get', 'status'],
+                              'alert', '#ef4444',
+                              'ongoing', '#f97316',
+                              '#71717a'
+                            ],
+                            'circle-opacity': 0.8,
+                            'circle-stroke-width': 2,
+                            'circle-stroke-color': '#ffffff'
+                          }}
+                        />
+                      </Source>
+                    )}
+
+                    {popupInfo && (
+                      <Popup
+                        longitude={popupInfo.geometry.coordinates[0]}
+                        latitude={popupInfo.geometry.coordinates[1]}
+                        anchor="bottom"
+                        onClose={() => setPopupInfo(null)}
+                      >
+                        <div className="p-2">
+                          <h3 className="font-medium text-gray-900">{popupInfo.properties?.name}</h3>
+                          <p className="text-sm text-gray-600">{popupInfo.properties?.type}</p>
+                          <p className="text-sm text-gray-600">{popupInfo.properties?.country}</p>
+                        </div>
+                      </Popup>
+                    )}
+                  </Map>
                 </div>
               </div>
             </motion.div>
@@ -264,22 +298,22 @@ export const Dashboard = () => {
                   >
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="font-medium text-primary-light">{disaster.name}</h3>
-                      <span className={`px-2 py-1 rounded-full text-xs ${disaster.color}`}>
-                        {disaster.severity}
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        disaster.status === 'alert' ? 'bg-red-500/20 text-red-400' :
+                        disaster.status === 'ongoing' ? 'bg-orange-500/20 text-orange-400' :
+                        'bg-yellow-500/20 text-yellow-400'
+                      }`}>
+                        {disaster.status}
                       </span>
                     </div>
                     <div className="space-y-2 text-sm text-neutral-light">
                       <div className="flex items-center gap-2">
                         <MapPin className="w-4 h-4" />
-                        {disaster.location}
+                        {disaster.country}
                       </div>
                       <div className="flex items-center gap-2">
                         <Users className="w-4 h-4" />
-                        {disaster.affectedPeople} affected
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4" />
-                        {disaster.timestamp}
+                        {disaster.type}
                       </div>
                     </div>
                   </motion.div>
@@ -298,7 +332,7 @@ export const Dashboard = () => {
                 <h2 className="text-xl font-heading font-bold text-primary-light">Recent Alerts</h2>
               </div>
               <div className="p-4 space-y-4">
-                {recentAlerts.map((alert, idx) => (
+                {recentAlerts?.map((alert: RecentAlert, idx: number) => (
                   <motion.div
                     key={idx}
                     initial={{ opacity: 0, x: 20 }}

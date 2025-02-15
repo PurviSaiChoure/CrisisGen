@@ -14,3 +14,6 @@ huggingface_hub
 together 
 openai 
 gdacs-api
+geojson
+requests
+python-dateutil
