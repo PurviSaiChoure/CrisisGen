@@ -89,47 +89,78 @@ To design an AI system that helps stakeholders (citizens, NGOs, and governments)
 - Utilize the communication tools to send messages to stakeholders.
 - Explore the Insights page to analyze disaster trends and statistics.
 
-## API Endpoints
+## 🌐 API Endpoints
 
-- **POST /generate-summary**: Generates a disaster summary based on the provided filters.
-  - **Request Body**:
-    ```json
-    {
-      "disasterType": "string",
-      "location": "string",
-      "timeframe": "string"
-    }
-    ```
-  - **Response**:
-    ```json
-    {
-      "status": "success",
-      "summary": "string"
-    }
-    ```
+### Summary Generation
+- `POST /generate-summary`: Generate comprehensive disaster reports
+- `POST /download-summary`: Download formatted summaries
+- `POST /share-summary`: Share summaries via email
 
-## Contributing
+### Action Planning
+- `POST /generate-action-plan`: Generate strategic response plans
 
-Contributions are welcome! Please follow these steps to contribute:
+### Dashboard Data
+- `GET /dashboard/map-data`: Real-time disaster location data
+- `GET /dashboard/stats`: Current response statistics
+- `GET /dashboard/activity`: Response activity metrics
+- `GET /dashboard/recent-alerts`: Latest disaster alerts
 
-1. Fork the repository.
-2. Create a new branch:
-   ```bash
-   git checkout -b feature/YourFeature
-   ```
-3. Make your changes and commit them:
-   ```bash
-   git commit -m "Add your feature"
-   ```
-4. Push to the branch:
-   ```bash
-   git push origin feature/YourFeature
-   ```
-5. Create a pull request.
+## 🤖 AI Agent Specifications
 
-## License
+### Web Search Agent
+- **Purpose**: Real-time information gathering
+- **Tools**: DuckDuckGo integration
+- **Capabilities**: Web scraping, data verification, source credibility assessment
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+### Research Agent
+- **Purpose**: In-depth analysis
+- **Tools**: DuckDuckGo, Newspaper4k
+- **Capabilities**: Historical data analysis, pattern recognition, impact assessment
+
+### Synthesis Agent
+- **Purpose**: Information structuring
+- **Model**: Llama-3.3-70B-Instruct-Turbo
+- **Capabilities**: Content organization, report generation, key insight extraction
+
+## 📊 Data Processing Pipeline
+
+1. **Data Collection**
+   - Real-time web scraping
+   - API integrations
+   - Historical data analysis
+
+2. **Processing**
+   - Multi-agent information synthesis
+   - Context-aware filtering
+   - Credibility assessment
+
+3. **Output Generation**
+   - Structured reports
+   - Action plans
+   - Communication templates
+
+## 🔒 Security Features
+
+- API key authentication
+- Rate limiting
+- CORS protection
+- Secure email integration
+- Environment variable protection
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read our contributing guidelines before submitting pull requests.
+
+## 📝 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🙏 Acknowledgments
+
+- Together AI for LLM access
+- Groq for high-performance inference
+- ReliefWeb for disaster data
+- OpenStreetMap for mapping data
 
 ## Contact
 
